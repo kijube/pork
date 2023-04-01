@@ -9,6 +9,7 @@ public static class LoggerUtils {
         "{Timestamp:dd.MM.yyyy HH:mm:ss} | {Level:u3} | {Message:lj}{NewLine}{Exception}";
 
     public static ILogger CreateLogger() {
+        
         var config = new LoggerConfiguration().MinimumLevel
             .Override("Microsoft.AspNetCore", LogEventLevel.Warning)
             .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)

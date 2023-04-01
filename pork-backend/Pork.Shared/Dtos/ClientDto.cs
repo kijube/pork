@@ -1,4 +1,6 @@
-﻿using Pork.Shared.Entities;
+﻿using Pork.DtoGenerator;
+using Pork.DtoGenerator.Attributes;
+using Pork.Shared.Entities;
 
 namespace Pork.Shared.Dtos;
 
