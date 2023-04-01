@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "controller", "controller", "{CC16973F-3311-41F7-91E4-B43589E8C55B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "management", "management", "{27FEEB48-77C2-4044-AF25-43CF73C96AA6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pork.Controller", "Pork.Controller\Pork.Controller.csproj", "{B8F6B50E-8E51-4077-ABD1-F0A287B5DD50}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pork.Manager", "Pork.Manager\Pork.Manager.csproj", "{C42868C4-EE49-4F68-8107-253F9E1F9D3E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{2B73A787-DA7D-45D1-B371-034C5581B2CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pork.Shared", "Pork.Shared\Pork.Shared.csproj", "{C754A2D4-0653-4B35-A467-833E74E6A95A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B8F6B50E-8E51-4077-ABD1-F0A287B5DD50} = {CC16973F-3311-41F7-91E4-B43589E8C55B}
+		{C42868C4-EE49-4F68-8107-253F9E1F9D3E} = {27FEEB48-77C2-4044-AF25-43CF73C96AA6}
+		{C754A2D4-0653-4B35-A467-833E74E6A95A} = {2B73A787-DA7D-45D1-B371-034C5581B2CF}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B8F6B50E-8E51-4077-ABD1-F0A287B5DD50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8F6B50E-8E51-4077-ABD1-F0A287B5DD50}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8F6B50E-8E51-4077-ABD1-F0A287B5DD50}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8F6B50E-8E51-4077-ABD1-F0A287B5DD50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C42868C4-EE49-4F68-8107-253F9E1F9D3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C42868C4-EE49-4F68-8107-253F9E1F9D3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C42868C4-EE49-4F68-8107-253F9E1F9D3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C42868C4-EE49-4F68-8107-253F9E1F9D3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C754A2D4-0653-4B35-A467-833E74E6A95A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C754A2D4-0653-4B35-A467-833E74E6A95A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C754A2D4-0653-4B35-A467-833E74E6A95A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C754A2D4-0653-4B35-A467-833E74E6A95A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
