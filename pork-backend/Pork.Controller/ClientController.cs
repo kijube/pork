@@ -75,18 +75,19 @@ public class ClientController : IAsyncDisposable {
 
     private async Task<bool> SendAsync(ClientRequest request) {
         try {
+            var doc = JsonSerializer.SerializeToDocument(request);
             var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(request));
             await webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true,
                 CancellationToken.None);
 
             // set sent boolean
             await dataContext.ClientSocketMessages.OfType<ClientRequest>()
-                .UpdateOneAsync(r => r.InternalId == request.InternalId,
+                .UpdateOneAsync(r => r.Id == request.Id,
                     Builders<ClientRequest>.Update.Set(r => r.Sent, true).Set(r => r.SentAt, DateTimeOffset.Now));
             return true;
         }
         catch (Exception e) {
-            Logger.Error(e, "An exception occured while sending message {Message}", request);
+            Logger.Error(e, "An exception occured while sending message {@Message}", request);
             return false;
         }
     }

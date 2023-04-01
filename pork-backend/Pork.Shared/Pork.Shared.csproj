@@ -14,8 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Pork.DtoGenerator.Attributes\Pork.DtoGenerator.Attributes.csproj" />
-        <ProjectReference Include="..\Pork.DtoGenerator\Pork.DtoGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+      <Folder Include="Dtos" />
     </ItemGroup>
 
 </Project>
