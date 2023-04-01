@@ -1,5 +1,9 @@
-﻿namespace Pork.Shared.Entities.Messages.Requests;
+﻿using Pork.DtoGenerator.Attributes;
 
+namespace Pork.Shared.Entities.Messages.Requests;
+
+[GenerateDto("Internal")]
+[GenerateDto("External")]
 public class ClientEvalRequest : ClientRequest {
-    public required string Code { get; init; }
+    [DtoInclude("*")] public required string Code { get; init; }
 }

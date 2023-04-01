@@ -7,7 +7,7 @@ namespace Pork.Shared.Entities;
 
 [GenerateDto]
 public class Client {
-    [BsonId] public ObjectId Id { get; init; }
+    //public ObjectId Id { get; init; }
     [DtoInclude] public required string ClientId { get; init; }
     [DtoInclude] public string? RemoteIp { get; set; }
     [DtoInclude] public bool IsOnline { get; set; }
