@@ -18,14 +18,14 @@ public class ClientConnector {
     }
 
     private async Task<Client> GetOrCreateClientAsync(HttpContext context, string clientId) {
-        var client = await dataContext.Clients.Find(c => c.Id == clientId).FirstOrDefaultAsync();
+        var client = await dataContext.Clients.Find(c => c.ClientId == clientId).FirstOrDefaultAsync();
         if (client is null) {
-            client = new Client {Id = clientId};
+            client = new Client {ClientId = clientId};
             await dataContext.Clients.InsertOneAsync(client);
         }
 
         client.RemoteIp = context.Connection.RemoteIpAddress?.ToString();
-        await dataContext.Clients.UpdateOneAsync(c => c.Id == clientId,
+        await dataContext.Clients.UpdateOneAsync(c => c.ClientId == clientId,
             Builders<Client>.Update.Set(c => c.RemoteIp, client.RemoteIp));
         return client;
     }
@@ -78,12 +78,12 @@ public class ClientConnector {
     }
 
     private async Task UpdateOnlineStatusAsync(string clientId, bool isOnline) {
-        await dataContext.Clients.UpdateOneAsync(c => c.Id == clientId,
+        await dataContext.Clients.UpdateOneAsync(c => c.ClientId == clientId,
             Builders<Client>.Update.Set(c => c.IsOnline, isOnline));
     }
 
     private async Task UpdateLastSeenAsync(string clientId) {
-        await dataContext.Clients.UpdateOneAsync(c => c.Id == clientId,
+        await dataContext.Clients.UpdateOneAsync(c => c.ClientId == clientId,
             Builders<Client>.Update.Set(c => c.LastSeen, DateTimeOffset.Now));
     }
 

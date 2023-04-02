@@ -42,7 +42,7 @@ clients.MapGet("/",
 
 var specificClient = clients.MapGroup("/{clientId}");
 specificClient.MapGet("", async ([FromServices] DataContext dataContext, string clientId) =>
-        await dataContext.Clients.Find(c => c.Id == clientId).FirstOrDefaultAsync())
+        await dataContext.Clients.Find(c => c.ClientId == clientId).FirstOrDefaultAsync())
     .WithName("GetClient")
     .WithTags("clients");
 
@@ -60,7 +60,7 @@ specificClient.MapGet("/logs",
 specificClient.MapGet("/events",
         async ([FromServices] DataContext dataContext, string clientId, [FromQuery] int count,
                 [FromQuery] int offset) =>
-            await dataContext.ClientResponses.Find(e => e.ClientId == clientId)
+            await dataContext.ClientMessages.Find(e => e.ClientId == clientId)
                 .SortByDescending(e => e.Timestamp)
                 .Skip(offset)
                 .Limit(count)
@@ -71,7 +71,7 @@ specificClient.MapGet("/events",
 specificClient.MapPut("/nickname",
         async ([FromServices] DataContext dataContext, string clientId, [FromBody] SetNicknameRequest request)
             => {
-            var result = await dataContext.Clients.UpdateOneAsync(c => c.Id == clientId,
+            var result = await dataContext.Clients.UpdateOneAsync(c => c.ClientId == clientId,
                 Builders<Client>.Update.Set(c => c.Nickname, request.Nickname));
             return result?.IsAcknowledged ?? false;
         })

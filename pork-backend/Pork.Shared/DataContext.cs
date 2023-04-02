@@ -10,7 +10,7 @@ public class DataContext {
 
     public IMongoCollection<Client> Clients { get; }
     public IMongoCollection<ClientLog> ClientLogs { get; }
-    public IMongoCollection<ClientMessage> ClientSocketMessages { get; }
+    public IMongoCollection<ClientMessage> ClientMessages { get; }
 
 
     public DataContext() {
@@ -19,6 +19,6 @@ public class DataContext {
 
         Clients = Database.GetCollection<Client>("Clients");
         ClientLogs = Database.GetCollection<ClientLog>("ClientLogs");
-        ClientSocketMessages = Database.GetCollection<ClientMessage>("ClientSocketMessages");
+        ClientMessages = Database.GetCollection<ClientMessage>("ClientMessages");
     }
 }

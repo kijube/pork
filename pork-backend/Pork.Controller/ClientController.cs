@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using MongoDB.Driver;
+using Pork.Controller.Dtos;
 using Pork.Shared;
 using Pork.Shared.Entities;
 using Pork.Shared.Entities.Messages.Requests;
@@ -58,15 +59,14 @@ public class ClientController : IAsyncDisposable {
                 return;
             }
 
-            var success = SocketResponseParser.TryParse(message, out var response);
-            if (!success || response is null) {
+            var success = DtoSerializer.TryMapResponse(message, out var response);
+            if (!success) {
                 Logger.Warning("Received invalid message {Message}", message);
                 return;
             }
 
-            response.InternalId = default;
-            response.ClientId = client.Id;
-            response.Timestamp = DateTimeOffset.Now;
+            var clientResponse = DtoMapper.MapExternalResponse(client.ClientId, response);
+            await dataContext.ClientMessages.InsertOneAsync(clientResponse);
         }
         catch (Exception e) {
             Logger.Error(e, "An exception occured while handling message {Message}", message);
@@ -75,13 +75,17 @@ public class ClientController : IAsyncDisposable {
 
     private async Task<bool> SendAsync(ClientRequest request) {
         try {
-            var doc = JsonSerializer.SerializeToDocument(request);
-            var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(request));
+            var success = DtoSerializer.TrySerializeRequest(request, out var json);
+            if (!success) {
+                throw new Exception($"Failed to serialize request with id {request.Id}");
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(json);
             await webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true,
                 CancellationToken.None);
 
             // set sent boolean
-            await dataContext.ClientSocketMessages.OfType<ClientRequest>()
+            await dataContext.ClientMessages.OfType<ClientRequest>()
                 .UpdateOneAsync(r => r.Id == request.Id,
                     Builders<ClientRequest>.Update.Set(r => r.Sent, true).Set(r => r.SentAt, DateTimeOffset.Now));
             return true;

@@ -5,13 +5,12 @@ using Pork.Shared.Entities.Messages.Responses;
 
 namespace Pork.Shared.Entities.Messages;
 
-[BsonKnownTypes(typeof(FailureClientResponse), typeof(ClientHookResponse), typeof(ClientEvalResponse),
+[BsonKnownTypes(typeof(ClientFailureResponse), typeof(ClientHookResponse), typeof(ClientEvalResponse),
     typeof(ClientEvalRequest))]
 public class ClientMessage {
     public ObjectId Id { get; set; }
 
-    public required string Type { get; init; }
-    public Guid? FlowId { get; init; }
-    public required DateTimeOffset Timestamp { get; init; }
-    public required string ClientId { get; init; }
+    public Guid? FlowId { get; set; }
+    public DateTimeOffset Timestamp { get; set; }
+    public string ClientId { get; set; }
 }
