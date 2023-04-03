@@ -14,7 +14,7 @@ public class DataContext {
 
 
     public DataContext() {
-        Client = new MongoClient("mongodb://mongouser:secret@localhost:27017");
+        Client = new MongoClient("mongodb://mongouser:secret@db:27017");
         Database = Client.GetDatabase("Pork");
 
         Clients = Database.GetCollection<Client>("Clients");

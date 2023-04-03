@@ -23,6 +23,16 @@ builder.Services.AddSwaggerGen(g => {
     g.UseAllOfForInheritance();
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        policy =>
+        {
+            policy.WithOrigins("http://localhost")
+                .AllowAnyHeader().AllowCredentials().AllowAnyMethod();
+        });
+});
+
 builder.Services.AddScoped<DataContext>();
 
 var app = builder.Build();
@@ -35,6 +45,8 @@ if (app.Environment.IsDevelopment()) {
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+
+app.UseCors();
 
 var clients = app.MapGroup("/clients");
 clients.MapGet("/",

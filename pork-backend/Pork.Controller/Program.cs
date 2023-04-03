@@ -7,12 +7,21 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 Log.Logger = LoggerUtils.CreateLogger();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
-// Add services to the container.
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        policy =>
+        {
+            policy.WithOrigins("http://localhost")
+                .AllowAnyHeader().AllowCredentials().AllowAnyMethod();
+        });
+});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -22,6 +31,8 @@ builder.Services.AddScoped<DataContext>();
 builder.Services.AddScoped<ClientConnector>();
 
 var app = builder.Build();
+
+app.UseCors();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {
