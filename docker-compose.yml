@@ -1,0 +1,19 @@
+version: '3.7'
+services:
+  db:
+    image: mongo:4.4.5-bionic
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongouser
+      MONGO_INITDB_ROOT_PASSWORD: secret
+  manager:
+    image: pork-manager
+    ports:
+      - 8082:8082
+  controller:
+    image: pork-controller
+    ports:
+      - 9092:9092
+  frontend:
+    image: pork-frontend
+    ports:
+      - 80:80

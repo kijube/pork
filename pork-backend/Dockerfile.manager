@@ -1,0 +1,12 @@
+FROM mcr.microsoft.com/dotnet/sdk:7.0 as build-env
+WORKDIR /app
+COPY . .
+RUN rm -r Pork.Controller
+RUN dotnet restore Pork.Manager/Pork.Manager.csproj
+RUN dotnet publish Pork.Manager -c Release -o /publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 as runtime
+WORKDIR /publish
+COPY --from=build-env /publish .
+ENV ASPNETCORE_URLS=http://+:8082
+ENTRYPOINT ["dotnet", "Pork.Manager.dll"]

@@ -32,7 +32,7 @@ function buildResponse({type, success, id = undefined, data = undefined, error =
 
 function connect() {
     // connect websocket
-    socket = new WebSocket('ws://localhost:5274/connect');
+    socket = new WebSocket('ws://localhost:9092/connect');
 
     socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
