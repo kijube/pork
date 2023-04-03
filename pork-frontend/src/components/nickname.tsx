@@ -30,7 +30,7 @@ export default function Nickname({ clientId }: { clientId?: string }) {
     setIsEditing(false)
     setNickname({
       clientId: clientId,
-      setNicknameRequest: { nickname: currentValue },
+      setNicknameRequestDto: { nickname: currentValue },
     })
   }
 

@@ -1,5 +1,7 @@
-﻿namespace Pork.Controller.Dtos.Messages.Responses;
+﻿using System.Text.Json;
+
+namespace Pork.Controller.Dtos.Messages.Responses;
 
 public class ExternalEvalResponse : ExternalResponse {
-    public required string Data { get; init; }
+    public required JsonElement? Data { get; init; }
 }

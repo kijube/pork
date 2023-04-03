@@ -1,6 +1,13 @@
 import { emptySplitApi as api } from "./empty-api";
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
+    clientEval: build.mutation<ClientEvalApiResponse, ClientEvalApiArg>({
+      query: (queryArg) => ({
+        url: `/clients/${queryArg.clientId}/actions/eval`,
+        method: "POST",
+        body: queryArg.evalRequestDto,
+      }),
+    }),
     getClients: build.query<GetClientsApiResponse, GetClientsApiArg>({
       query: () => ({ url: `/clients` }),
     }),
@@ -11,7 +18,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/clients/${queryArg.clientId}/nickname`,
         method: "PUT",
-        body: queryArg.setNicknameRequest,
+        body: queryArg.setNicknameRequestDto,
       }),
     }),
     getClientEvents: build.query<
@@ -33,79 +40,89 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 });
 export { injectedRtkApi as api };
-export type GetClientsApiResponse = /** status 200 Success */ Client[];
+export type ClientEvalApiResponse =
+  /** status 200 Success */ InternalEvalRequest;
+export type ClientEvalApiArg = {
+  clientId: string;
+  evalRequestDto: EvalRequestDto;
+};
+export type GetClientsApiResponse = /** status 200 Success */ ClientDto[];
 export type GetClientsApiArg = void;
-export type GetClientApiResponse = /** status 200 Success */ Client;
+export type GetClientApiResponse = /** status 200 Success */ ClientDto;
 export type GetClientApiArg = {
   clientId: string;
 };
-export type SetNicknameApiResponse = unknown;
+export type SetNicknameApiResponse = /** status 200 Success */ boolean;
 export type SetNicknameApiArg = {
   clientId: string;
-  setNicknameRequest: SetNicknameRequest;
+  setNicknameRequestDto: SetNicknameRequestDto;
 };
-export type GetClientEventsApiResponse =
-  /** status 200 Success */ SocketEventDateTimeOffset3C3EfAnonymousType0[];
+export type GetClientEventsApiResponse = /** status 200 Success */ (
+  | InternalMessage
+  | InternalEvalResponse
+  | InternalFailureResponse
+  | InternalHookResponse
+  | InternalResponse
+  | InternalEvalRequest
+  | InternalRequest
+)[];
 export type GetClientEventsApiArg = {
   clientId: string;
   count: number;
   offset: number;
 };
-export type GetClientLogsApiResponse =
-  /** status 200 Success */ ClientLogEvent[];
+export type GetClientLogsApiResponse = /** status 200 Success */ ClientLogDto[];
 export type GetClientLogsApiArg = {
   clientId: string;
   count: number;
   offset: number;
 };
-export type Client = {
-  id: string;
+export type InternalMessage = {
+  type: string;
+  flowId: string | null;
+  timestamp: string;
+};
+export type InternalRequest = InternalMessage & {
+  sent: boolean;
+  sentAt: string | null;
+};
+export type InternalEvalRequest = InternalRequest & {
+  code: string;
+};
+export type EvalRequestDto = {
+  code: string;
+};
+export type ClientDto = {
+  clientId: string;
   remoteIp: string | null;
   isOnline: boolean;
   lastSeen: string;
   nickname: string | null;
 };
-export type SetNicknameRequest = {
+export type SetNicknameRequestDto = {
   nickname: string;
 };
-export type SocketEvent = {
-  type: string;
-  eventId: string | null;
-  success: boolean;
-};
-export type ErrorSocketEvent = SocketEvent & {
-  error: string;
-};
-export type SuccessSocketEvent = SocketEvent;
-export type SocketEvalEvent = SuccessSocketEvent & {
+export type InternalResponse = InternalMessage;
+export type InternalEvalResponse = InternalResponse & {
   data: string;
 };
-export type SocketHookEvent = SuccessSocketEvent & {
+export type InternalFailureResponse = InternalResponse & {
+  error: string;
+};
+export type InternalHookResponse = InternalResponse & {
   method: string;
   hookId: string;
   args: string | null;
   result: string | null;
 };
-export type SocketEventDateTimeOffset3C3EfAnonymousType0 = {
-  event:
-    | (
-        | SocketEvent
-        | ErrorSocketEvent
-        | SocketEvalEvent
-        | SocketHookEvent
-        | SuccessSocketEvent
-      )
-    | null;
-  timestamp: string;
-};
-export type ClientLogEvent = {
-  id: number;
+export type ClientLogDto = {
   clientId: string;
   level: string;
   timestamp: string;
   message: string;
 };
 export const {
+  useClientEvalMutation,
   useGetClientsQuery,
   useGetClientQuery,
   useSetNicknameMutation,

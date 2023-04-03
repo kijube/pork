@@ -1,4 +1,5 @@
-﻿using Pork.Controller.Dtos.Messages.Responses;
+﻿using System.Text.Json;
+using Pork.Controller.Dtos.Messages.Responses;
 using Pork.Shared.Entities.Messages.Responses;
 
 namespace Pork.Controller.Dtos;
@@ -9,7 +10,7 @@ public static class DtoMapper {
         {
             ExternalEvalResponse evalResponse => new ClientEvalResponse
             {
-                Data = evalResponse.Data
+                Data = JsonSerializer.Serialize(evalResponse.Data)
             },
             ExternalFailureResponse failureResponse => new ClientFailureResponse
             {
@@ -18,7 +19,8 @@ public static class DtoMapper {
             ExternalHookResponse hookResponse => new ClientHookResponse
             {
                 Method = hookResponse.Method,
-                Args = hookResponse.Args,
+                Args = JsonSerializer.Serialize(hookResponse.Args),
+                Result = JsonSerializer.Serialize(hookResponse.Result),
                 HookId = hookResponse.HookId
             },
             _ => throw new Exception($"Unknown response type {response.Type}")

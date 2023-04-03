@@ -45,6 +45,21 @@ public static class DtoSerializer {
         return true;
     }
 
+    public static ExternalRequest MapRequest(ClientRequest request) {
+        var result = request switch
+        {
+            ClientEvalRequest evalRequest => new ExternalEvalRequest
+            {
+                Type = "e",
+                Code = evalRequest.Code
+            },
+            _ => throw new ArgumentOutOfRangeException(nameof(request), request, null)
+        };
+
+        result.FlowId = request.FlowId;
+        return result;
+    }
+
     public static bool TrySerializeRequest(ClientRequest request, out string json) {
         json = null!;
 
@@ -52,7 +67,7 @@ public static class DtoSerializer {
             return false;
         }
 
-        json = JsonSerializer.Serialize(request, externalType, JsonSerializerOptions);
+        json = JsonSerializer.Serialize(MapRequest(request), externalType, JsonSerializerOptions);
         return true;
     }
 }

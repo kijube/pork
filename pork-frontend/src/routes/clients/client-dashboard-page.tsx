@@ -4,20 +4,16 @@ import { useGetClientEventsQuery } from "../../store/api"
 
 export default function ClientDashboardPage() {
   return (
-    <main className="grid flex-1 auto-rows-auto grid-cols-2 gap-2 p-2">
-      <div className="relative col-span-1 h-full overflow-y-scroll rounded border border-neutral-700 text-sm">
+    <main className="grid min-h-full w-full auto-rows-auto grid-cols-5 gap-2 p-2">
+      <div className="relative col-span-2 h-full overflow-y-scroll rounded border border-neutral-700 text-sm">
         <div className="absolute h-full w-full">
           <Evaluator />
         </div>
       </div>
-      <div className="relative col-span-1 h-full overflow-y-scroll rounded border border-neutral-700 text-sm">
+      <div className="relative col-span-3 h-full overflow-y-scroll rounded border border-neutral-700 text-sm">
         <div className="absolute h-full w-full">
           <EventLog />
         </div>
-      </div>
-      <div className="col-span-1 h-full overflow-y-scroll rounded border border-neutral-700 text-sm"></div>
-      <div className="relative col-span-1 h-full overflow-y-scroll rounded border border-neutral-700 text-sm">
-        <div className="absolute h-full w-full">toaster</div>
       </div>
     </main>
   )
@@ -51,8 +47,7 @@ function EventLog() {
   }
 
   return (
-    <div className="min-h-full w-full">
-      <table className="w-full">
+      <table className="max-w-full w-full">
         <tbody>
           {events.map((e, i) => {
             return (
@@ -60,18 +55,15 @@ function EventLog() {
                 key={e.timestamp + "" + i}
                 className={` odd:bg-neutral-800 odd:bg-opacity-25`}
               >
-                <td className="py-1 pl-4">
-                  {e.event?.type}
-                </td>
+                <td className="py-1 pl-4">{e.type}</td>
                 <td className="py-1 pl-4 opacity-50">
                   {moment(e.timestamp).format("DD.MM. HH:mm:ss")}
                 </td>
-                <td className="py-1 pl-8 pr-4">{JSON.stringify(e.event)}</td>
+                <td className="py-1 pl-8 pr-4">{JSON.stringify(e)}</td>
               </tr>
             )
           })}
         </tbody>
       </table>
-    </div>
   )
 }

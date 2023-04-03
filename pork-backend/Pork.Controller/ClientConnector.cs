@@ -95,7 +95,7 @@ public class ClientConnector {
     private ILogger CreateLogger(Client client) {
         var logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
-            .Enrich.WithProperty("ClientId", client.Id)
+            .Enrich.WithProperty("ClientId", client.ClientId)
             .Enrich.WithProperty("RemoteIp", client.RemoteIp ??
                                              "[unknown]")
             .WriteTo.Console(

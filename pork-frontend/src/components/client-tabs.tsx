@@ -1,13 +1,15 @@
+import { useCallback } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 
 type Tab = {
   path: string
   name: string
+  key: string
 }
 
 const tabs: Tab[] = [
-  { name: "Dashboard", path: "/" },
-  { name: "Logs", path: "/logs" },
+  { name: "Dashboard", path: "/", key: "D" },
+  { name: "Logs", path: "/logs", key: "L" },
 ]
 
 export default function ClientTabs({ clientId }: { clientId?: string }) {
@@ -25,17 +27,29 @@ export default function ClientTabs({ clientId }: { clientId?: string }) {
         return (
           <div
             key={tab.path}
-            className={`flex cursor-pointer flex-row items-center gap-1 px-2 py-1 ${
+            className={`flex cursor-pointer flex-row items-center gap-1 px-2 py-1 text-neutral-400 ${
               location.pathname === `${base}${tab.path}`
-                ? "underline"
-                : "hover:underline"
-            }`}
+                ? "text-neutral-200"
+                : "hover:text-neutral-200"
+            } transition`}
             onClick={() => navigate(`${base}${tab.path}`)}
           >
-            {tab.name}
+            <KeyedName name={tab.name} letter={tab.key} />
           </div>
         )
       })}
     </div>
+  )
+}
+
+function KeyedName({ name, letter: key }: { name: string; letter: string }) {
+  const keyIdx = name.toLowerCase().indexOf(key.toLowerCase())
+  const split = [name.slice(0, keyIdx), name.slice(keyIdx, keyIdx + key.length)]
+  return (
+    <span>
+      {split[0]}
+      <span className="underline">{split[1]}</span>
+      {name.slice(keyIdx + key.length)}
+    </span>
   )
 }

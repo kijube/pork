@@ -1,5 +1,7 @@
-﻿using Pork.Manager.Dtos.Messages.Requests;
+﻿using Pork.Manager.Dtos.Messages;
+using Pork.Manager.Dtos.Messages.Requests;
 using Pork.Manager.Dtos.Messages.Responses;
+using Pork.Shared.Entities.Messages;
 using Pork.Shared.Entities.Messages.Requests;
 using Pork.Shared.Entities.Messages.Responses;
 
@@ -10,8 +12,18 @@ public static class DtoMapper {
     {
         {typeof(ClientHookResponse), "hook"},
         {typeof(ClientFailureResponse), "error"},
-        {typeof(ClientEvalResponse), "eval"}
+        {typeof(ClientEvalResponse), "eval"},
+        {typeof(ClientEvalRequest), "evalreq"}
     };
+
+    public static InternalMessage MapMessage(ClientMessage message) {
+        return message switch
+        {
+            ClientRequest request => MapRequest(request),
+            ClientResponse response => MapResponse(response),
+            _ => throw new ArgumentOutOfRangeException(nameof(message), message, "Unknown message type")
+        };
+    }
 
     public static InternalResponse MapResponse(ClientResponse response) {
         InternalResponse result = response switch
@@ -34,7 +46,8 @@ public static class DtoMapper {
             _ => throw new ArgumentOutOfRangeException(nameof(response), response, null)
         };
 
-        result.Type = TypeMap[result.GetType()];
+        result.Timestamp = response.Timestamp;
+        result.Type = TypeMap[response.GetType()];
         result.FlowId = response.FlowId;
 
         return result;
@@ -52,7 +65,8 @@ public static class DtoMapper {
             _ => throw new ArgumentOutOfRangeException(nameof(request), request, null)
         };
 
-        result.Type = TypeMap[result.GetType()];
+        result.Timestamp = request.Timestamp;
+        result.Type = TypeMap[request.GetType()];
         result.FlowId = request.FlowId;
 
         return result;
@@ -71,6 +85,7 @@ public static class DtoMapper {
         };
 
         result.FlowId = request.FlowId;
+        request.Timestamp = result.Timestamp;
 
         return result;
     }

@@ -18,15 +18,24 @@ function headersToJson(headers) {
     return obj;
 }
 
-function buildResponse({type, success, id = undefined, data = undefined, error = undefined, ...extra}) {
+function buildResponse(type, flowId, {...data}) {
     return JSON.stringify({
         type,
-        id,
-        success,
-        data,
-        error,
-        ...extra
+        flowId,
+        ...data
     });
+}
+
+function buildFailureResponse(flowId, error) {
+    return buildResponse('f', flowId, {error});
+}
+
+function buildEvalResponse(flowId, data) {
+    return buildResponse('e', flowId, {data});
+}
+
+function buildHookResponse(flowId, hookId, method, args = undefined, result = undefined) {
+    return buildResponse('h', flowId, {method, hookId, args, result});
 }
 
 
@@ -36,14 +45,16 @@ function connect() {
 
     socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
-        const id = data.eventId;
-        const payload = data.payload;
+        const flowId = data.flowId;
+        const code = data.code;
         let response;
+        
+        console.log(data);
 
         try {
-            response = buildResponse({type: "eval", id, success: true, data: eval(payload)})
+            response = buildEvalResponse(flowId, eval(code))
         } catch (e) {
-            response = buildResponse({type: "eval", id, success: false, error: e.toString()})
+            response = buildFailureResponse(flowId, e.toString())
         }
 
         socket.send(response);
@@ -68,7 +79,7 @@ function hook() {
             const original = console[method];
             console[method] = function (...args) {
                 if (socket) {
-                    socket.send(buildResponse({type: 'hook', success: true, hookId, method: `console.${method}`, args}));
+                    socket.send(buildHookResponse(undefined, hookId, `console.${method}`, args));
                 }
                 original.apply(console, args);
             }
@@ -81,24 +92,27 @@ function hook() {
     window.fetch = function (...args) {
         const hookId = generateId();
         if (socket) {
-            socket.send(buildResponse({type: 'hook', success: true, hookId, method: "fetch", args}));
+            socket.send(buildHookResponse(undefined, hookId, `fetch`, args));
         }
         return originalFetch.apply(window, args)
             .then(response => {
-                response.text().then(body => {
-                    const b64body = btoa(body);
-                    if (socket) {
-                        socket.send(JSON.stringify({
-                            type: 'hook', hookId, success: true, method: "fetch", result: {
-                                status: response.status,
-                                headers: headersToJson(response.headers),
-                                body: b64body
+                    response.text().then(body => {
+                            const b64body = btoa(body);
+                            if (socket) {
+                                socket.send(buildHookResponse(null, hookId, "fetch", undefined, {
+                                    status: response.status,
+                                    headers: headersToJson(response.headers),
+                                    body: b64body
+                                }));
+
                             }
-                        }));
-                    }
-                })
-            });
+                        }
+                    )
+                }
+            )
+
     }
+
 
     /*
     // hook xhr

@@ -6,6 +6,8 @@ using Pork.Controller.Dtos;
 using Pork.Shared;
 using Pork.Shared.Entities;
 using Pork.Shared.Entities.Messages.Requests;
+using Pork.Shared.Entities.Messages.Responses;
+using Serilog;
 using ILogger = Serilog.ILogger;
 
 namespace Pork.Controller;
@@ -26,7 +28,7 @@ public class ClientController : IAsyncDisposable {
     }
 
 
-    private async Task HandleAsync() {
+    private async Task HandleAsync(CancellationTokenSource cts) {
         var buffer = new byte[1024 * 4];
 
         while (true) {
@@ -36,6 +38,7 @@ public class ClientController : IAsyncDisposable {
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                 switch (result.MessageType) {
                     case WebSocketMessageType.Close:
+                        cts.Cancel();
                         return;
                     case WebSocketMessageType.Text:
                         messageBuilder.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
@@ -85,9 +88,9 @@ public class ClientController : IAsyncDisposable {
                 CancellationToken.None);
 
             // set sent boolean
-            await dataContext.ClientMessages.OfType<ClientRequest>()
+            await dataContext.ClientMessages.OfType<ClientEvalRequest>()
                 .UpdateOneAsync(r => r.Id == request.Id,
-                    Builders<ClientRequest>.Update.Set(r => r.Sent, true).Set(r => r.SentAt, DateTimeOffset.Now));
+                    Builders<ClientEvalRequest>.Update.Set(r => r.Sent, true).Set(r => r.SentAt, DateTimeOffset.Now));
             return true;
         }
         catch (Exception e) {
@@ -96,9 +99,36 @@ public class ClientController : IAsyncDisposable {
         }
     }
 
+    private async Task RunSenderAsync(CancellationToken ct) {
+        while (webSocket.CloseStatus is null && !ct.IsCancellationRequested) {
+            var request = await dataContext.ClientMessages.OfType<ClientEvalRequest>()
+                .Find(r => r.ClientId == client.ClientId && !r.Sent)
+                .FirstOrDefaultAsync(ct);
+
+            if (request is not null) {
+                var ok = await SendAsync(request);
+                if (ok) {
+                    await dataContext.ClientMessages.OfType<ClientRequest>()
+                        .UpdateOneAsync(r => r.Id == request.Id,
+                            Builders<ClientRequest>.Update.Set(r => r.Sent, true)
+                                .Set(r => r.SentAt, DateTimeOffset.Now), cancellationToken: ct);
+                }
+                else {
+                    Logger.Error("Failed to send message {@Message}", request);
+                    await Task.Delay(TimeSpan.FromSeconds(5), ct);
+                }
+            }
+            else {
+                await Task.Delay(TimeSpan.FromSeconds(2), ct);
+            }
+        }
+    }
+
     public async Task RunAsync() {
+        using var cts = new CancellationTokenSource();
         try {
-            await HandleAsync();
+            _ = RunSenderAsync(cts.Token);
+            await HandleAsync(cts);
         }
         catch (Exception e) {
             Logger.Error(e, "An exception occured");

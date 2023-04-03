@@ -36,7 +36,7 @@ function Logs() {
         {logs?.map((l) => {
           return (
             <tr
-              key={l.id}
+              key={l.timestamp+l.message}
               className={`${
                 levelColors[l.level!]
               } odd:bg-neutral-800 odd:bg-opacity-25`}
@@ -47,7 +47,7 @@ function Logs() {
               <td className="py-1 pl-4 opacity-50">
                 {moment(l.timestamp).format("DD.MM. HH:mm:ss")}
               </td>
-              <td className="py-1 pl-8 pr-4">{l.message}</td>
+              <td className="py-1 pl-8 pr-4 break-all">{l.message}</td>
             </tr>
           )
         })}
