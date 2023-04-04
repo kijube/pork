@@ -9,6 +9,7 @@ type Tab = {
 
 const tabs: Tab[] = [
   { name: "Dashboard", path: "/", key: "D" },
+  { name: "Console", path: "/console", key: "C" },
   { name: "Logs", path: "/logs", key: "L" },
 ]
 
@@ -27,11 +28,12 @@ export default function ClientTabs({ clientId }: { clientId?: string }) {
         return (
           <div
             key={tab.path}
-            className={`flex cursor-pointer flex-row items-center gap-1 px-2 py-1 text-neutral-400 ${
+            className={`flex cursor-pointer flex-row items-center gap-1 px-2 py-1 ${
               location.pathname === `${base}${tab.path}`
                 ? "text-neutral-200"
-                : "hover:text-neutral-200"
+                : "hover:text-neutral-200 text-neutral-400"
             } transition`}
+            
             onClick={() => navigate(`${base}${tab.path}`)}
           >
             <KeyedName name={tab.name} letter={tab.key} />
@@ -48,7 +50,7 @@ function KeyedName({ name, letter: key }: { name: string; letter: string }) {
   return (
     <span>
       {split[0]}
-      <span className="underline">{split[1]}</span>
+      <span className="underline ">{split[1]}</span>
       {name.slice(keyIdx + key.length)}
     </span>
   )

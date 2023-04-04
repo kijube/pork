@@ -5,8 +5,8 @@ using Pork.Shared.Entities.Messages.Responses;
 
 namespace Pork.Shared.Entities.Messages;
 
-[BsonKnownTypes(typeof(ClientFailureResponse), typeof(ClientEvalResponse), typeof(ClientEvalRequest),
-    typeof(ClientHookResponse), typeof(ClientRequest), typeof(ClientResponse))]
+[BsonDiscriminator(RootClass = true)]
+[BsonKnownTypes(typeof(ClientRequest), typeof(ClientResponse))]
 public class ClientMessage {
     public ObjectId Id { get; set; }
 

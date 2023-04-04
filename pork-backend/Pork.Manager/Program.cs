@@ -1,12 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Pork.Manager;
 using Pork.Manager.Dtos;
+using Pork.Manager.Dtos.Messages;
 using Pork.Manager.Dtos.Messages.Requests;
 using Pork.Shared;
 using Pork.Shared.Entities;
 using Pork.Shared.Entities.Messages.Requests;
+using Pork.Shared.Entities.Messages.Responses;
 using Serilog;
 
 Log.Logger = LoggerUtils.CreateLogger();
@@ -23,13 +26,13 @@ builder.Services.AddSwaggerGen(g => {
     g.UseAllOfForInheritance();
 });
 
-builder.Services.AddCors(options =>
-{
+builder.Services.AddCors(options => {
     options.AddDefaultPolicy(
-        policy =>
-        {
+        policy => {
             policy.WithOrigins("http://localhost")
-                .AllowAnyHeader().AllowCredentials().AllowAnyMethod();
+                .AllowAnyHeader()
+                .AllowCredentials()
+                .AllowAnyMethod();
         });
 });
 
@@ -84,6 +87,28 @@ specificClient.MapGet("/events",
             .Select(DtoMapper.MapMessage))
     .WithName("GetClientEvents")
     .WithTags("events");
+
+specificClient.MapGet("/events/eval",
+    async ([FromServices] DataContext dataContext, string clientId, [FromQuery] int count, [FromQuery] int offset) => {
+        var requests = await dataContext.ClientMessages.OfType<ClientEvalRequest>()
+            .Find(e => e.ClientId == clientId)
+            .SortByDescending(e => e.Timestamp)
+            .Skip(offset)
+            .Limit(count)
+            .ToListAsync();
+
+        var requestFlowIds = requests.Select(r => r.FlowId).Where(f => f is not null).ToList();
+
+        var responses = await dataContext.ClientMessages.OfType<ClientEvalResponse>()
+            .Find(r => requestFlowIds.Contains(r.FlowId))
+            .ToListAsync();
+
+        return requests.GroupJoin(responses, r => r.FlowId, r => r.FlowId, (request, response) => {
+            var responseList = response.ToList();
+            return InternalEvalFlow.From(request, responseList.Count > 0 ? responseList[0] : null);
+        });
+    });
+
 
 specificClient.MapPut("/nickname",
         async ([FromServices] DataContext dataContext, string clientId, [FromBody] SetNicknameRequestDto request)

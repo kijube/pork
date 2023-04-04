@@ -101,7 +101,7 @@ public class ClientController : IAsyncDisposable {
 
     private async Task RunSenderAsync(CancellationToken ct) {
         while (webSocket.CloseStatus is null && !ct.IsCancellationRequested) {
-            var request = await dataContext.ClientMessages.OfType<ClientEvalRequest>()
+            var request = await dataContext.ClientMessages.OfType<ClientRequest>()
                 .Find(r => r.ClientId == client.ClientId && !r.Sent)
                 .FirstOrDefaultAsync(ct);
 
