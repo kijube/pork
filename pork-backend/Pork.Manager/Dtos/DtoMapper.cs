@@ -8,8 +8,7 @@ using Pork.Shared.Entities.Messages.Responses;
 namespace Pork.Manager.Dtos;
 
 public static class DtoMapper {
-    private static readonly Dictionary<Type, string> TypeMap = new()
-    {
+    private static readonly Dictionary<Type, string> TypeMap = new() {
         {typeof(ClientHookResponse), "hook"},
         {typeof(ClientFailureResponse), "error"},
         {typeof(ClientEvalResponse), "eval"},
@@ -17,8 +16,7 @@ public static class DtoMapper {
     };
 
     public static InternalMessage MapMessage(ClientMessage message) {
-        return message switch
-        {
+        return message switch {
             ClientRequest request => MapRequest(request),
             ClientResponse response => MapResponse(response),
             _ => throw new ArgumentOutOfRangeException(nameof(message), message, "Unknown message type")
@@ -26,21 +24,17 @@ public static class DtoMapper {
     }
 
     public static InternalResponse MapResponse(ClientResponse response) {
-        InternalResponse result = response switch
-        {
-            ClientHookResponse hookResponse => new InternalHookResponse
-            {
+        InternalResponse result = response switch {
+            ClientHookResponse hookResponse => new InternalHookResponse {
                 Method = hookResponse.Method,
                 HookId = hookResponse.HookId,
                 Args = hookResponse.Args,
                 Result = hookResponse.Result
             },
-            ClientFailureResponse failureResponse => new InternalFailureResponse
-            {
+            ClientFailureResponse failureResponse => new InternalFailureResponse {
                 Error = failureResponse.Error
             },
-            ClientEvalResponse evalResponse => new InternalEvalResponse
-            {
+            ClientEvalResponse evalResponse => new InternalEvalResponse {
                 Data = evalResponse.Data
             },
             _ => throw new ArgumentOutOfRangeException(nameof(response), response, null)
@@ -54,13 +48,14 @@ public static class DtoMapper {
     }
 
     public static InternalRequest MapRequest(ClientRequest request) {
-        InternalRequest result = request switch
-        {
-            ClientEvalRequest evalRequest => new InternalEvalRequest
-            {
+        InternalRequest result = request switch {
+            ClientEvalRequest evalRequest => new InternalEvalRequest {
                 Code = evalRequest.Code,
                 Sent = evalRequest.Sent,
-                SentAt = evalRequest.SentAt
+                SentAt = evalRequest.SentAt,
+                Response = evalRequest.Response is not null
+                    ? MapResponse(evalRequest.Response) as InternalEvalResponse
+                    : null
             },
             _ => throw new ArgumentOutOfRangeException(nameof(request), request, null)
         };
@@ -73,10 +68,8 @@ public static class DtoMapper {
     }
 
     public static ClientRequest MapRequest(InternalRequest request) {
-        ClientRequest result = request switch
-        {
-            InternalEvalRequest evalRequest => new ClientEvalRequest
-            {
+        ClientRequest result = request switch {
+            InternalEvalRequest evalRequest => new ClientEvalRequest {
                 Code = evalRequest.Code,
                 Sent = evalRequest.Sent,
                 SentAt = evalRequest.SentAt

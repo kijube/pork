@@ -34,8 +34,7 @@ public class ClientConnector {
         var hasClientId = context.Request.Cookies.TryGetValue("clientId", out var clientId);
         if (!hasClientId || clientId is null) {
             clientId = Guid.NewGuid().ToString();
-            context.Response.Cookies.Append("clientId", clientId, new CookieOptions
-            {
+            context.Response.Cookies.Append("clientId", clientId, new CookieOptions {
                 Expires = null, SameSite = SameSiteMode.Strict, HttpOnly = true
             });
         }
@@ -67,6 +66,7 @@ public class ClientConnector {
             await UpdateLastSeenAsync(clientId);
             await controller.RunAsync();
             await UpdateOnlineStatusAsync(clientId, false);
+            controller.Logger.Information("Client disconnected");
         }
         catch (Exception e) {
             Log.Error(e, "An error occurred while handling a client connection from {RemoteIp}/{ClientId}",

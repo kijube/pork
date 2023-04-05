@@ -5,6 +5,7 @@ using MongoDB.Driver;
 using Pork.Controller.Dtos;
 using Pork.Shared;
 using Pork.Shared.Entities;
+using Pork.Shared.Entities.Messages;
 using Pork.Shared.Entities.Messages.Requests;
 using Pork.Shared.Entities.Messages.Responses;
 using Serilog;
@@ -69,11 +70,39 @@ public class ClientController : IAsyncDisposable {
             }
 
             var clientResponse = DtoMapper.MapExternalResponse(client.ClientId, response);
-            await dataContext.ClientMessages.InsertOneAsync(clientResponse);
+
+            if (clientResponse is ClientEvalResponse {FlowId: not null} eval) {
+                // handle eval differently as we save it together with the request
+                await HandleEvalResponseAsync(eval);
+                return;
+            }
+
+            await HandleResponseAsync(clientResponse);
         }
         catch (Exception e) {
             Logger.Error(e, "An exception occured while handling message {Message}", message);
         }
+    }
+
+    private async Task HandleResponseAsync(ClientResponse response) {
+        await dataContext.ClientMessages.InsertOneAsync(response);
+    }
+
+    private async Task HandleEvalResponseAsync(ClientEvalResponse eval) {
+        // get request
+        var request = await dataContext.ClientMessages.OfType<ClientEvalRequest>()
+            .Find(r => r.FlowId == eval.FlowId)
+            .FirstOrDefaultAsync();
+
+        if (request is null) {
+            // no request found, just save the response
+            await HandleResponseAsync(eval);
+            return;
+        }
+
+        // update request with response
+        await dataContext.ClientMessages.OfType<ClientEvalRequest>().UpdateOneAsync(c => c.Id == request.Id,
+            Builders<ClientEvalRequest>.Update.Set(c => c.Response, eval));
     }
 
     private async Task<bool> SendAsync(ClientRequest request) {

@@ -29,7 +29,7 @@ builder.Services.AddSwaggerGen(g => {
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(
         policy => {
-            policy.WithOrigins("http://localhost")
+            policy.WithOrigins("http://localhost", "http://localhost:5173")
                 .AllowAnyHeader()
                 .AllowCredentials()
                 .AllowAnyMethod();
@@ -88,26 +88,20 @@ specificClient.MapGet("/events",
     .WithName("GetClientEvents")
     .WithTags("events");
 
-specificClient.MapGet("/events/eval",
-    async ([FromServices] DataContext dataContext, string clientId, [FromQuery] int count, [FromQuery] int offset) => {
-        var requests = await dataContext.ClientMessages.OfType<ClientEvalRequest>()
-            .Find(e => e.ClientId == clientId)
-            .SortByDescending(e => e.Timestamp)
-            .Skip(offset)
-            .Limit(count)
-            .ToListAsync();
+specificClient.MapGet("/events/console",
+        async ([FromServices] DataContext dataContext, string clientId, [FromQuery] int count,
+            [FromQuery] int offset) => {
+            var requests = await dataContext.ClientMessages
+                .Find(e => e.ClientId == clientId && e.ShowInConsole == true)
+                .SortBy(e => e.Timestamp)
+                .Skip(offset)
+                .Limit(count)
+                .ToListAsync();
 
-        var requestFlowIds = requests.Select(r => r.FlowId).Where(f => f is not null).ToList();
-
-        var responses = await dataContext.ClientMessages.OfType<ClientEvalResponse>()
-            .Find(r => requestFlowIds.Contains(r.FlowId))
-            .ToListAsync();
-
-        return requests.GroupJoin(responses, r => r.FlowId, r => r.FlowId, (request, response) => {
-            var responseList = response.ToList();
-            return InternalEvalFlow.From(request, responseList.Count > 0 ? responseList[0] : null);
-        });
-    });
+            return requests.Select(DtoMapper.MapMessage);
+        })
+    .WithName("GetClientConsoleEvents")
+    .WithTags("events");
 
 
 specificClient.MapPut("/nickname",
@@ -129,8 +123,7 @@ clientActions.MapPost("/eval",
                 return Results.NotFound();
             }
 
-            var eval = new ClientEvalRequest
-            {
+            var eval = new ClientEvalRequest {
                 Timestamp = DateTimeOffset.Now,
                 ClientId = client.ClientId,
                 Code = request.Code,

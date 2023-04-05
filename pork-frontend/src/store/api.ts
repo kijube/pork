@@ -30,6 +30,15 @@ const injectedRtkApi = api.injectEndpoints({
         params: { count: queryArg.count, offset: queryArg.offset },
       }),
     }),
+    getClientConsoleEvents: build.query<
+      GetClientConsoleEventsApiResponse,
+      GetClientConsoleEventsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/clients/${queryArg.clientId}/events/console`,
+        params: { count: queryArg.count, offset: queryArg.offset },
+      }),
+    }),
     getClientLogs: build.query<GetClientLogsApiResponse, GetClientLogsApiArg>({
       query: (queryArg) => ({
         url: `/clients/${queryArg.clientId}/logs`,
@@ -71,6 +80,20 @@ export type GetClientEventsApiArg = {
   count: number;
   offset: number;
 };
+export type GetClientConsoleEventsApiResponse = /** status 200 Success */ (
+  | InternalMessage
+  | InternalEvalResponse
+  | InternalFailureResponse
+  | InternalHookResponse
+  | InternalResponse
+  | InternalEvalRequest
+  | InternalRequest
+)[];
+export type GetClientConsoleEventsApiArg = {
+  clientId: string;
+  count: number;
+  offset: number;
+};
 export type GetClientLogsApiResponse = /** status 200 Success */ ClientLogDto[];
 export type GetClientLogsApiArg = {
   clientId: string;
@@ -86,8 +109,13 @@ export type InternalRequest = InternalMessage & {
   sent: boolean;
   sentAt: string | null;
 };
+export type InternalResponse = InternalMessage;
+export type InternalEvalResponse = InternalResponse & {
+  data: string;
+};
 export type InternalEvalRequest = InternalRequest & {
   code: string;
+  response: InternalEvalResponse;
 };
 export type EvalRequestDto = {
   code: string;
@@ -101,10 +129,6 @@ export type ClientDto = {
 };
 export type SetNicknameRequestDto = {
   nickname: string;
-};
-export type InternalResponse = InternalMessage;
-export type InternalEvalResponse = InternalResponse & {
-  data: string;
 };
 export type InternalFailureResponse = InternalResponse & {
   error: string;
@@ -127,5 +151,6 @@ export const {
   useGetClientQuery,
   useSetNicknameMutation,
   useGetClientEventsQuery,
+  useGetClientConsoleEventsQuery,
   useGetClientLogsQuery,
 } = injectedRtkApi;

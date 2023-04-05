@@ -2,4 +2,6 @@
 
 public class ClientEvalResponse : ClientResponse {
     public required string Data { get; set; }
+
+    public override bool ShowInConsole => true;
 }

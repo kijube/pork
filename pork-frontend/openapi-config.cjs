@@ -1,6 +1,6 @@
 /** @type {import("@rtk-query/codegen-openapi").ConfigFile} */
 const config = {
-  schemaFile: "http://localhost:5033/swagger/v1/swagger.json",
+  schemaFile: "http://localhost:8082/swagger/v1/swagger.json",
   apiFile: "./src/store/empty-api.ts",
   apiImport: "emptySplitApi",
   outputFile: "./src/store/api.ts",

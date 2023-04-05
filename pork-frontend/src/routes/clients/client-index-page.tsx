@@ -5,6 +5,7 @@ import OnlineIndicator from "../../components/online-indicator"
 import { useGetClientLogsQuery, useGetClientQuery } from "../../store/api"
 import Nickname from "../../components/nickname"
 import ClientTabs from "../../components/client-tabs"
+import { timestampFormat } from "../../utils"
 
 export default function ClientIndexPage() {
   const { clientId } = useParams()
@@ -25,7 +26,7 @@ export default function ClientIndexPage() {
           {isSuccess && (
             <>
               <span className="text-xs text-neutral-600">
-                last seen {moment(client.lastSeen).format("DD.MM. HH:mm:ss")}
+                last seen {moment(client.lastSeen).format(timestampFormat)}
               </span>
             </>
           )}

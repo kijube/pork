@@ -13,4 +13,7 @@ public class ClientMessage {
     public Guid? FlowId { get; set; }
     public DateTimeOffset Timestamp { get; set; }
     public string ClientId { get; set; }
+    
+    [BsonElement]
+    public virtual bool ShowInConsole => false;
 }
