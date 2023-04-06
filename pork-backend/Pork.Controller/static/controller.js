@@ -47,17 +47,14 @@ function connect() {
         const data = JSON.parse(event.data);
         const flowId = data.flowId;
         const code = data.code;
-        let response;
-        
-        console.log(data);
+        const execCode = `try {${code}}catch(e){e.toString()}`
 
-        try {
-            response = buildEvalResponse(flowId, eval(code))
-        } catch (e) {
-            response = buildFailureResponse(flowId, e.toString())
-        }
+        Promise.resolve(eval(execCode)).then(data => {
+            socket.send(buildEvalResponse(flowId, `${data}`))
+        }).catch(e => {
+            socket.send(buildFailureResponse(flowId, e.toString()))
+        })
 
-        socket.send(response);
     }
 
 

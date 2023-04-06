@@ -130,7 +130,7 @@ function EvalRequestEvent({ event }: { event: InternalEvalRequest }) {
               <ArrowPathIcon className="h-4 w-4 animate-spin" />
             )}
           </div>
-          <pre className="flex-1 text-neutral-400">{event.code}</pre>
+          <pre className="flex-1 text-neutral-400 break-words">{event.code}</pre>
         </div>
       </ConsoleEntry>
       {response}
@@ -148,7 +148,7 @@ function ConsoleEntry({
   return (
     <div className="flex flex-row items-start">
       <div className="flex-1">{children}</div>
-      <div className="ml-4 flex flex-col pt-1 text-xs text-neutral-500">
+      <div className="ml-4 w-24 flex flex-col pt-1 text-xs text-neutral-500">
         {moment(timestamp).format(timestampFormat)}
       </div>
     </div>
@@ -165,7 +165,7 @@ function EvalResponseEvent({ event }: { event?: InternalEvalResponse }) {
         <div className="mr-4 grid h-6 w-6 place-items-center">
           <ArrowRightIcon className="h-4 w-4 text-neutral-500" />
         </div>
-        <pre>{event.data}</pre>
+        <pre className="break-all">{event.data.substring(1, event.data.length-1)}</pre>
       </div>
     </ConsoleEntry>
   )
