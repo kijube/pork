@@ -1,7 +1,5 @@
 ﻿namespace Pork.Shared.Entities.Messages.Responses;
 
 public class ClientEvalResponse : ClientResponse {
-    public required string Data { get; set; }
-
-    public override bool ShowInConsole => true;
+    public required string Data { get; init; }
 }

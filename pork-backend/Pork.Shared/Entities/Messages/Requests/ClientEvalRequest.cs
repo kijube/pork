@@ -6,6 +6,4 @@ public class ClientEvalRequest : ClientRequest {
     public required string Code { get; init; }
 
     public ClientEvalResponse? Response { get; set; }
-
-    public override bool ShowInConsole => true;
 }

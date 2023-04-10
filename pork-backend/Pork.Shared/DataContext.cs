@@ -1,24 +1,35 @@
-﻿using MongoDB.Driver;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 using Pork.Shared.Entities;
 using Pork.Shared.Entities.Messages;
+using Pork.Shared.Entities.Messages.Requests;
+using Pork.Shared.Entities.Messages.Responses;
 
 namespace Pork.Shared;
 
-public class DataContext {
-    private MongoClient Client { get; }
-    private IMongoDatabase Database { get; }
+public class DataContext : DbContext {
+    public DbSet<Client> Clients { get; init; }
+    public DbSet<ClientLog> ClientLogs { get; init; }
 
-    public IMongoCollection<Client> Clients { get; }
-    public IMongoCollection<ClientLog> ClientLogs { get; }
-    public IMongoCollection<ClientMessage> ClientMessages { get; }
+    public DbSet<ClientMessage> ClientMessages { get; init; }
+    public DbSet<ClientRequest> ClientRequests { get; init; }
+    public DbSet<ClientEvalRequest> ClientEvalRequests { get; init; }
+
+    public DbSet<ClientResponse> ClientResponses { get; set; }
+    public DbSet<ClientFailureResponse> ClientFailureResponses { get; set; }
+    public DbSet<ClientEvalResponse> ClientEvalResponses { get; set; }
+    public DbSet<ClientHookResponse> ClientHookResponses { get; set; }
 
 
-    public DataContext() {
-        Client = new MongoClient("mongodb://mongouser:secret@localhost:27017");
-        Database = Client.GetDatabase("Pork");
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.UseNpgsql(
+            "User ID=postgres;Password=pork;Host=localhost;Port=5432;Database=pork;Include Error Detail=true;");
+    }
 
-        Clients = Database.GetCollection<Client>("Clients");
-        ClientLogs = Database.GetCollection<ClientLog>("ClientLogs");
-        ClientMessages = Database.GetCollection<ClientMessage>("ClientMessages");
+    protected override void OnModelCreating(ModelBuilder modelBuilder) {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<ClientMessage>().UseTpcMappingStrategy();
     }
 }

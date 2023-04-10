@@ -1,8 +1,8 @@
 ﻿namespace Pork.Shared.Entities.Messages.Responses;
 
 public class ClientHookResponse : ClientResponse {
-    public required string Method { get; set; }
-    public required string HookId { get; set; }
-    public string? Args { get; set; }
-    public string? Result { get; set; }
+    public required string Method { get; init; }
+    public required string HookId { get; init; }
+    public string? Args { get; init; }
+    public string? Result { get; init; }
 }
