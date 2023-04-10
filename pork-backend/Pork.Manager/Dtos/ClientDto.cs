@@ -3,7 +3,7 @@
 namespace Pork.Manager.Dtos;
 
 public class ClientDto {
-    public required string ClientId { get; init; }
+    public required Guid ClientId { get; init; }
     public required string? RemoteIp { get; init; }
     public required bool IsOnline { get; init; }
     public required DateTimeOffset LastSeen { get; init; }

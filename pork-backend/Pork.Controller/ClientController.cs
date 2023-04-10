@@ -1,14 +1,11 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
-using MongoDB.Driver;
+using Microsoft.EntityFrameworkCore;
 using Pork.Controller.Dtos;
 using Pork.Shared;
 using Pork.Shared.Entities;
-using Pork.Shared.Entities.Messages;
 using Pork.Shared.Entities.Messages.Requests;
 using Pork.Shared.Entities.Messages.Responses;
-using Serilog;
 using ILogger = Serilog.ILogger;
 
 namespace Pork.Controller;
@@ -16,15 +13,18 @@ namespace Pork.Controller;
 public class ClientController : IAsyncDisposable {
     private readonly WebSocket webSocket;
     private readonly Client client;
-    private readonly DataContext dataContext;
+    private readonly DataContext readContext;
+    private readonly DataContext writeContext;
 
     public ILogger Logger { get; }
 
 
-    public ClientController(DataContext dataContext, ILogger logger, WebSocket webSocket, Client client) {
-        this.dataContext = dataContext;
+    public ClientController(DataContext readContext, DataContext writeContext, ILogger logger, WebSocket webSocket,
+        Client client) {
+        this.readContext = readContext;
         this.webSocket = webSocket;
         this.client = client;
+        this.writeContext = writeContext;
         Logger = logger;
     }
 
@@ -47,9 +47,8 @@ public class ClientController : IAsyncDisposable {
                 }
             } while (!result.EndOfMessage);
 
-            // update last seen, refactor to method todo
-            await dataContext.Clients.UpdateOneAsync(c => c.Id == client.Id,
-                Builders<Client>.Update.Set(c => c.LastSeen, DateTimeOffset.Now));
+            client.LastSeen = DateTimeOffset.UtcNow;
+            await readContext.SaveChangesAsync();
 
 
             var message = messageBuilder.ToString();
@@ -85,14 +84,14 @@ public class ClientController : IAsyncDisposable {
     }
 
     private async Task HandleResponseAsync(ClientResponse response) {
-        await dataContext.ClientMessages.InsertOneAsync(response);
+        await readContext.ClientMessages.AddAsync(response);
+        await readContext.SaveChangesAsync();
     }
 
     private async Task HandleEvalResponseAsync(ClientEvalResponse eval) {
         // get request
-        var request = await dataContext.ClientMessages.OfType<ClientEvalRequest>()
-            .Find(r => r.FlowId == eval.FlowId)
-            .FirstOrDefaultAsync();
+        var request = await readContext.ClientEvalRequests
+            .FirstOrDefaultAsync(r => r.FlowId == eval.FlowId);
 
         if (request is null) {
             // no request found, just save the response
@@ -101,8 +100,8 @@ public class ClientController : IAsyncDisposable {
         }
 
         // update request with response
-        await dataContext.ClientMessages.OfType<ClientEvalRequest>().UpdateOneAsync(c => c.Id == request.Id,
-            Builders<ClientEvalRequest>.Update.Set(c => c.Response, eval));
+        request.Response = eval;
+        await readContext.SaveChangesAsync();
     }
 
     private async Task<bool> SendAsync(ClientRequest request) {
@@ -117,9 +116,9 @@ public class ClientController : IAsyncDisposable {
                 CancellationToken.None);
 
             // set sent boolean
-            await dataContext.ClientMessages.OfType<ClientEvalRequest>()
-                .UpdateOneAsync(r => r.Id == request.Id,
-                    Builders<ClientEvalRequest>.Update.Set(r => r.Sent, true).Set(r => r.SentAt, DateTimeOffset.Now));
+            request.Sent = true;
+            request.SentAt = DateTimeOffset.UtcNow;
+            await writeContext.SaveChangesAsync();
             return true;
         }
         catch (Exception e) {
@@ -130,17 +129,15 @@ public class ClientController : IAsyncDisposable {
 
     private async Task RunSenderAsync(CancellationToken ct) {
         while (webSocket.CloseStatus is null && !ct.IsCancellationRequested) {
-            var request = await dataContext.ClientMessages.OfType<ClientRequest>()
-                .Find(r => r.ClientId == client.ClientId && !r.Sent)
-                .FirstOrDefaultAsync(ct);
+            var request = await writeContext.ClientMessages.OfType<ClientRequest>()
+                .FirstOrDefaultAsync(r => r.ClientId == client.ClientId && !r.Sent, cancellationToken: ct);
 
             if (request is not null) {
                 var ok = await SendAsync(request);
                 if (ok) {
-                    await dataContext.ClientMessages.OfType<ClientRequest>()
-                        .UpdateOneAsync(r => r.Id == request.Id,
-                            Builders<ClientRequest>.Update.Set(r => r.Sent, true)
-                                .Set(r => r.SentAt, DateTimeOffset.Now), cancellationToken: ct);
+                    request.SentAt = DateTimeOffset.UtcNow;
+                    request.Sent = true;
+                    await writeContext.SaveChangesAsync(ct);
                 }
                 else {
                     Logger.Error("Failed to send message {@Message}", request);

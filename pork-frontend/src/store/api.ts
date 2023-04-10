@@ -61,7 +61,7 @@ export type GetClientApiResponse = /** status 200 Success */ ClientDto;
 export type GetClientApiArg = {
   clientId: string;
 };
-export type SetNicknameApiResponse = /** status 200 Success */ boolean;
+export type SetNicknameApiResponse = unknown;
 export type SetNicknameApiArg = {
   clientId: string;
   setNicknameRequestDto: SetNicknameRequestDto;

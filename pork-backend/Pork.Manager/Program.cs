@@ -1,15 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using Pork.Manager;
+using Microsoft.EntityFrameworkCore;
 using Pork.Manager.Dtos;
-using Pork.Manager.Dtos.Messages;
 using Pork.Manager.Dtos.Messages.Requests;
 using Pork.Shared;
 using Pork.Shared.Entities;
 using Pork.Shared.Entities.Messages.Requests;
-using Pork.Shared.Entities.Messages.Responses;
 using Serilog;
 
 Log.Logger = LoggerUtils.CreateLogger();
@@ -36,9 +32,10 @@ builder.Services.AddCors(options => {
         });
 });
 
-builder.Services.AddScoped<DataContext>();
+builder.Services.AddDbContext<DataContext>();
 
 var app = builder.Build();
+
 
 if (app.Environment.IsDevelopment()) {
     app.UseSwagger();
@@ -54,48 +51,51 @@ app.UseCors();
 var clients = app.MapGroup("/clients");
 clients.MapGet("/",
         async ([FromServices] DataContext dataContext) =>
-            (await dataContext.Clients.Find(_ => true).ToListAsync()).Select(ClientDto.From))
+            (await dataContext.Clients.ToListAsync()).Select(ClientDto.From))
     .WithName("GetClients")
     .WithTags("clients");
 
 
 var specificClient = clients.MapGroup("/{clientId}");
-specificClient.MapGet("", async ([FromServices] DataContext dataContext, string clientId) =>
-        ClientDto.From(await dataContext.Clients.Find(c => c.ClientId == clientId).FirstOrDefaultAsync()))
+specificClient.MapGet("", async ([FromServices] DataContext dataContext, Guid clientId) => {
+        var client = await dataContext.Clients.FirstOrDefaultAsync(c => c.ClientId == clientId);
+        return client is null ? Results.NotFound() : Results.Ok(ClientDto.From(client));
+    })
+    .Produces<ClientDto>()
     .WithName("GetClient")
     .WithTags("clients");
 
 specificClient.MapGet("/logs",
-        async ([FromServices] DataContext dataContext, string clientId, [FromQuery] [Range(1, 100)] int count,
+        async ([FromServices] DataContext dataContext, Guid clientId, [FromQuery] [Range(1, 100)] int count,
                 [FromQuery] int offset) =>
-            (await dataContext.ClientLogs.Find(e => e.ClientId == clientId)
-                .SortByDescending(e => e.Timestamp)
+            (await dataContext.ClientLogs.Where(e => e.ClientId == clientId)
+                .OrderByDescending(e => e.Timestamp)
                 .Skip(offset)
-                .Limit(count)
+                .Take(count)
                 .ToListAsync()).Select(ClientLogDto.From))
     .WithName("GetClientLogs")
     .WithTags("logs");
 
 specificClient.MapGet("/events",
-        async ([FromServices] DataContext dataContext, string clientId, [FromQuery] int count,
+        async ([FromServices] DataContext dataContext, Guid clientId, [FromQuery] int count,
                 [FromQuery] int offset) =>
-            (await dataContext.ClientMessages.Find(e => e.ClientId == clientId)
-                .SortByDescending(e => e.Timestamp)
+            (await dataContext.ClientMessages.Where(e => e.ClientId == clientId)
+                .OrderByDescending(e => e.Timestamp)
                 .Skip(offset)
-                .Limit(count)
+                .Take(count)
                 .ToListAsync())
             .Select(DtoMapper.MapMessage))
     .WithName("GetClientEvents")
     .WithTags("events");
 
 specificClient.MapGet("/events/console",
-        async ([FromServices] DataContext dataContext, string clientId, [FromQuery] int count,
+        async ([FromServices] DataContext dataContext, Guid clientId, [FromQuery] int count,
             [FromQuery] int offset) => {
             var requests = await dataContext.ClientMessages
-                .Find(e => e.ClientId == clientId && e.ShowInConsole == true)
-                .SortBy(e => e.Timestamp)
+                .Where(e => e.ClientId == clientId && e.ShowInConsole)
+                .OrderBy(e => e.Timestamp)
                 .Skip(offset)
-                .Limit(count)
+                .Take(count)
                 .ToListAsync();
 
             return requests.Select(DtoMapper.MapMessage);
@@ -105,11 +105,16 @@ specificClient.MapGet("/events/console",
 
 
 specificClient.MapPut("/nickname",
-        async ([FromServices] DataContext dataContext, string clientId, [FromBody] SetNicknameRequestDto request)
+        async ([FromServices] DataContext dataContext, Guid clientId, [FromBody] SetNicknameRequestDto request)
             => {
-            var result = await dataContext.Clients.UpdateOneAsync(c => c.ClientId == clientId,
-                Builders<Client>.Update.Set(c => c.Nickname, request.Nickname));
-            return result?.IsAcknowledged ?? false;
+            var client = await dataContext.Clients.FirstOrDefaultAsync(c => c.ClientId == clientId);
+            if (client is null) {
+                return Results.NotFound();
+            }
+
+            client.Nickname = request.Nickname;
+            await dataContext.SaveChangesAsync();
+            return Results.Ok();
         })
     .WithName("SetNickname")
     .WithTags("clients");
@@ -117,20 +122,22 @@ specificClient.MapPut("/nickname",
 var clientActions = specificClient.MapGroup("/actions");
 
 clientActions.MapPost("/eval",
-        async ([FromServices] DataContext dataContext, string clientId, [FromBody] EvalRequestDto request) => {
-            var client = await dataContext.Clients.Find(c => c.ClientId == clientId).FirstOrDefaultAsync();
+        async ([FromServices] DataContext dataContext, Guid clientId, [FromBody] EvalRequestDto request) => {
+            var client = await dataContext.Clients.FirstOrDefaultAsync(c => c.ClientId == clientId);
             if (client == null) {
                 return Results.NotFound();
             }
 
-            var eval = new ClientEvalRequest {
-                Timestamp = DateTimeOffset.Now,
+            var eval = new ClientEvalRequest
+            {
+                Timestamp = DateTimeOffset.UtcNow,
                 ClientId = client.ClientId,
                 Code = request.Code,
                 FlowId = Guid.NewGuid(),
             };
 
-            await dataContext.ClientMessages.InsertOneAsync(eval);
+            await dataContext.ClientMessages.AddAsync(eval);
+            await dataContext.SaveChangesAsync();
             return Results.Ok(DtoMapper.MapRequest(eval) as InternalEvalRequest);
         })
     .Produces<InternalEvalRequest>()

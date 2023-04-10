@@ -13,13 +13,13 @@ Log.Logger = LoggerUtils.CreateLogger();
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
-builder.Services.AddCors(options =>
-{
+builder.Services.AddCors(options => {
     options.AddDefaultPolicy(
-        policy =>
-        {
+        policy => {
             policy.WithOrigins("http://localhost")
-                .AllowAnyHeader().AllowCredentials().AllowAnyMethod();
+                .AllowAnyHeader()
+                .AllowCredentials()
+                .AllowAnyMethod();
         });
 });
 
@@ -27,10 +27,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opts => { opts.SupportNonNullableReferenceTypes(); });
 builder.Services.AddWebSockets(opts => { });
-builder.Services.AddScoped<DataContext>();
+builder.Services.AddDbContext<DataContext>();
 builder.Services.AddScoped<ClientConnector>();
 
 var app = builder.Build();
+
+// init client log manager
+using var scope = app.Services.CreateScope();
+using var ctx = scope.ServiceProvider.GetRequiredService<DataContext>();
+ClientLogManager.Init(ctx);
 
 app.UseCors();
 

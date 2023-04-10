@@ -5,7 +5,7 @@ using Pork.Shared.Entities.Messages.Responses;
 namespace Pork.Controller.Dtos;
 
 public static class DtoMapper {
-    public static ClientResponse MapExternalResponse(string clientId, ExternalResponse response) {
+    public static ClientResponse MapExternalResponse(Guid clientId, ExternalResponse response) {
         ClientResponse result = response switch
         {
             ExternalEvalResponse evalResponse => new ClientEvalResponse
@@ -28,7 +28,7 @@ public static class DtoMapper {
 
         result.FlowId = response.FlowId;
         result.ClientId = clientId;
-        result.Timestamp = DateTimeOffset.Now; // maybe customize this
+        result.Timestamp = DateTimeOffset.UtcNow; // maybe customize this
 
         return result;
     }
