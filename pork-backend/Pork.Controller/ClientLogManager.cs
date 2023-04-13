@@ -58,7 +58,7 @@ public class ClientLogSink : IBatchedLogEventSink {
 
                 return new ClientLog()
                 {
-                    ClientId = Guid.Parse(ev.Properties["ClientId"].ToString()),
+                    LocalClientId = Guid.Parse(ev.Properties["ClientId"].ToString()),
                     Level = ev.Level.ToString(),
                     Message = msg,
                     Timestamp = ev.Timestamp.ToUniversalTime()

@@ -5,7 +5,7 @@ public abstract class ClientMessage {
 
     public Guid? FlowId { get; set; }
     public DateTimeOffset Timestamp { get; set; }
-    public Guid ClientId { get; set; }
-    public virtual bool ShowInConsole { get; set; } = false;
-
+    public int LocalClientId { get; set; }
+    public LocalClient LocalClient { get; set; }
+    public bool ShowInConsole { get; set; } = false;
 }

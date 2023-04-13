@@ -12,7 +12,7 @@ namespace Pork.Controller;
 
 public class ClientController : IAsyncDisposable {
     private readonly WebSocket webSocket;
-    private readonly Client client;
+    private readonly LocalClient localClient;
     private readonly DataContext readContext;
     private readonly DataContext writeContext;
 
@@ -20,10 +20,10 @@ public class ClientController : IAsyncDisposable {
 
 
     public ClientController(DataContext readContext, DataContext writeContext, ILogger logger, WebSocket webSocket,
-        Client client) {
+        LocalClient localClient) {
         this.readContext = readContext;
         this.webSocket = webSocket;
-        this.client = client;
+        this.localClient = localClient;
         this.writeContext = writeContext;
         Logger = logger;
     }
@@ -47,12 +47,12 @@ public class ClientController : IAsyncDisposable {
                 }
             } while (!result.EndOfMessage);
 
-            client.LastSeen = DateTimeOffset.UtcNow;
+            localClient.LastSeen = DateTimeOffset.UtcNow;
             await readContext.SaveChangesAsync();
 
 
             var message = messageBuilder.ToString();
-            _ = OnMessageAsync(message); // we don't want to wait for the message to be handled
+            await OnMessageAsync(message); // find way to not wait for handling
         }
     }
 
@@ -68,12 +68,20 @@ public class ClientController : IAsyncDisposable {
                 return;
             }
 
-            var clientResponse = DtoMapper.MapExternalResponse(client.ClientId, response);
+            var clientResponse = DtoMapper.MapExternalResponse(localClient.GlobalClientId, response);
 
-            if (clientResponse is ClientEvalResponse {FlowId: not null} eval) {
-                // handle eval differently as we save it together with the request
-                await HandleEvalResponseAsync(eval);
-                return;
+            switch (clientResponse) {
+                case ClientEvalResponse {FlowId: not null} eval:
+                    // handle eval differently as we save it together with the request
+                    await HandleEvalResponseAsync(eval);
+                    return;
+                case ClientHookResponse hookResponse:
+                    if (hookResponse.Method.StartsWith("console.")) {
+                        // log console messages to console
+                        hookResponse.ShowInConsole = true;
+                    }
+
+                    break;
             }
 
             await HandleResponseAsync(clientResponse);
@@ -130,7 +138,7 @@ public class ClientController : IAsyncDisposable {
     private async Task RunSenderAsync(CancellationToken ct) {
         while (webSocket.CloseStatus is null && !ct.IsCancellationRequested) {
             var request = await writeContext.ClientMessages.OfType<ClientRequest>()
-                .FirstOrDefaultAsync(r => r.ClientId == client.ClientId && !r.Sent, cancellationToken: ct);
+                .FirstOrDefaultAsync(r => r.LocalClientId == localClient.Id && !r.Sent, cancellationToken: ct);
 
             if (request is not null) {
                 var ok = await SendAsync(request);

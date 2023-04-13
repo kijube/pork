@@ -15,16 +15,45 @@ public class ClientConnector {
         this.serviceProvider = serviceProvider;
     }
 
-    private async Task<Client> GetOrCreateClientAsync(DataContext dataContext, HttpContext context, Guid clientId) {
-        var client = await dataContext.Clients.FirstOrDefaultAsync(c => c.ClientId == clientId);
-        if (client is null) {
-            client = new Client {ClientId = clientId};
-            await dataContext.Clients.AddAsync(client);
+    private static async Task<LocalClient> GetOrCreateClientAsync(DataContext dataContext, HttpContext context,
+        Guid clientId) {
+        // get existing global client or create a new one
+        var globalClient = await dataContext.GlobalClients.FirstOrDefaultAsync(c => c.Id == clientId);
+        if (globalClient is null) {
+            globalClient = new GlobalClient {
+                Id = clientId
+            };
+            await dataContext.GlobalClients.AddAsync(globalClient);
         }
 
-        client.RemoteIp = context.Connection.RemoteIpAddress?.ToString();
+        globalClient.RemoteIp = context.Connection.RemoteIpAddress?.ToString();
+
+        // get existing site or create a new one
+        var origin = new Uri(context.Request.Headers["Origin"].ToString());
+        var site = await dataContext.Sites.FirstOrDefaultAsync(s => s.Host == origin.Host);
+
+        if (site is null) {
+            site = new Site {
+                Host = origin.Host
+            };
+            await dataContext.Sites.AddAsync(site);
+        }
+
+        // get existing local client or create a new one
+        var localClient = await dataContext.LocalClients.FirstOrDefaultAsync(c =>
+            c.GlobalClientId == globalClient.Id && c.SiteId == site.Id);
+
+        if (localClient is null) {
+            localClient = new LocalClient {
+                GlobalClient = globalClient,
+                Site = site
+            };
+            await dataContext.LocalClients.AddAsync(localClient);
+        }
+
+
         await dataContext.SaveChangesAsync();
-        return client;
+        return localClient;
     }
 
     public async Task ConnectAsync(HttpContext context) {
@@ -36,8 +65,7 @@ public class ClientConnector {
         var hasClientId = context.Request.Cookies.TryGetValue("clientId", out var clientIdStr);
         if (!hasClientId || clientIdStr is null) {
             clientIdStr = Guid.NewGuid().ToString();
-            context.Response.Cookies.Append("clientId", clientIdStr, new CookieOptions
-            {
+            context.Response.Cookies.Append("clientId", clientIdStr, new CookieOptions {
                 Expires = null, SameSite = SameSiteMode.Strict, HttpOnly = true
             });
         }
@@ -48,15 +76,17 @@ public class ClientConnector {
         }
 
         ClientController controller;
-        Client client;
+        LocalClient localClient;
         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
 
         try {
             await ConnectionLock.WaitAsync();
-            client = await GetOrCreateClientAsync(writeContext, context, clientId);
+            localClient = await GetOrCreateClientAsync(readContext, context, clientId);
             controller = new ClientController(readContext, writeContext,
-                ClientLogManager.GetClientLogger(client.ClientId, client.RemoteIp ?? "[unknown]"), webSocket,
-                client);
+                ClientLogManager.GetClientLogger(localClient.GlobalClientId,
+                    localClient.GlobalClient.RemoteIp ?? "[unknown]"),
+                webSocket,
+                localClient);
 
             if (ClientManager.TryGetController(clientId, out _)) {
                 controller.Logger.Warning("A second connection was tried to be opened for the same client");
@@ -70,18 +100,18 @@ public class ClientConnector {
         }
 
         try {
-            controller.Logger.Information("Client connected from {RemoteIp}", client.RemoteIp);
-            client.IsOnline = true;
-            client.LastSeen = DateTimeOffset.UtcNow;
-            await writeContext.SaveChangesAsync();
+            controller.Logger.Information("Client connected from {RemoteIp}", localClient.GlobalClient.RemoteIp);
+            localClient.IsOnline = true;
+            localClient.LastSeen = DateTimeOffset.UtcNow;
+            await readContext.SaveChangesAsync();
             await controller.RunAsync();
-            client.IsOnline = false;
-            await writeContext.SaveChangesAsync();
+            localClient.IsOnline = false;
+            await readContext.SaveChangesAsync();
             controller.Logger.Information("Client disconnected");
         }
         catch (Exception e) {
             Log.Error(e, "An error occurred while handling a client connection from {RemoteIp}/{ClientId}",
-                client.RemoteIp, client.Id);
+                localClient.GlobalClient.RemoteIp, localClient.Id);
         }
         finally {
             ClientManager.Controllers.Remove(clientId, out _);

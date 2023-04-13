@@ -59,7 +59,7 @@ function EventLog() {
                 <td className="py-1 pl-4 opacity-50">
                   {moment(e.timestamp).format("DD.MM. HH:mm:ss")}
                 </td>
-                <td className="py-1 pl-8 pr-4">{JSON.stringify(e)}</td>
+                <td className="py-1 pl-8 pr-4 break-all">{JSON.stringify(e)}</td>
               </tr>
             )
           })}

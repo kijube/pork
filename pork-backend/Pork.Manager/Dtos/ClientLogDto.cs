@@ -11,7 +11,7 @@ public class ClientLogDto {
     public static ClientLogDto From(ClientLog log) {
         return new ClientLogDto
         {
-            ClientId = log.ClientId,
+            ClientId = log.LocalClientId,
             Level = log.Level,
             Timestamp = log.Timestamp,
             Message = log.Message

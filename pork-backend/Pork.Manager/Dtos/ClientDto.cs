@@ -9,14 +9,14 @@ public class ClientDto {
     public required DateTimeOffset LastSeen { get; init; }
     public required string? Nickname { get; init; }
 
-    public static ClientDto From(Client client) {
+    public static ClientDto From(GlobalClient globalClient) {
         return new ClientDto
         {
-            ClientId = client.ClientId,
-            RemoteIp = client.RemoteIp,
-            IsOnline = client.IsOnline,
-            LastSeen = client.LastSeen,
-            Nickname = client.Nickname
+            ClientId = globalClient.Id,
+            RemoteIp = globalClient.RemoteIp,
+            IsOnline = globalClient.IsOnline,
+            LastSeen = globalClient.LastSeen,
+            Nickname = globalClient.Nickname
         };
     }
 }

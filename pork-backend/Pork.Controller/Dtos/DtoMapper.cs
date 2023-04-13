@@ -27,7 +27,7 @@ public static class DtoMapper {
         };
 
         result.FlowId = response.FlowId;
-        result.ClientId = clientId;
+        result.LocalClientId = clientId;
         result.Timestamp = DateTimeOffset.UtcNow; // maybe customize this
 
         return result;

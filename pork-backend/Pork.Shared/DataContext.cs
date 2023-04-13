@@ -9,7 +9,9 @@ using Pork.Shared.Entities.Messages.Responses;
 namespace Pork.Shared;
 
 public class DataContext : DbContext {
-    public DbSet<Client> Clients { get; init; }
+    public DbSet<GlobalClient> GlobalClients { get; init; }
+    public DbSet<LocalClient> LocalClients { get; init; }
+    public DbSet<Site> Sites { get; init; }
     public DbSet<ClientLog> ClientLogs { get; init; }
 
     public DbSet<ClientMessage> ClientMessages { get; init; }
