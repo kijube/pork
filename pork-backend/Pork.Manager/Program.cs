@@ -52,24 +52,46 @@ app.UseCors();
 var clients = app.MapGroup("/clients");
 clients.MapGet("/",
         async ([FromServices] DataContext dataContext) =>
-            (await dataContext.GlobalClients.ToListAsync()).Select(ClientDto.From))
+            (await dataContext.LocalClients.Include(l => l.GlobalClient).Include(l => l.Site).ToListAsync()).Select(
+                LocalClientDto.From))
     .WithName("GetClients")
     .WithTags("clients");
 
 
-var specificClient = clients.MapGroup("/{clientId}");
-specificClient.MapGet("", async ([FromServices] DataContext dataContext, Guid clientId) => {
-        var client = await dataContext.GlobalClients.FirstOrDefaultAsync(c => c.Id == clientId);
-        return client is null ? Results.NotFound() : Results.Ok(ClientDto.From(client));
+var specificGlobalClient = clients.MapGroup("/global/{globalClientId}");
+specificGlobalClient.MapPut("/nickname",
+        async ([FromServices] DataContext dataContext, Guid globalClientId,
+                [FromBody] SetNicknameRequestDto request)
+            => {
+            var client = await dataContext.GlobalClients.FirstOrDefaultAsync(e =>
+                e.Id == globalClientId);
+            if (client is null) {
+                return Results.NotFound();
+            }
+
+            client.Nickname = request.Nickname;
+            await dataContext.SaveChangesAsync();
+            return Results.Ok();
+        })
+    .WithName("SetNickname")
+    .WithTags("clients");
+
+var specificLocalClient = clients.MapGroup("/local/{localClientId}");
+specificLocalClient.MapGet("", async ([FromServices] DataContext dataContext, int localClientId) => {
+        var client = await dataContext.LocalClients.Include(l => l.GlobalClient)
+            .Include(l => l.Site)
+            .FirstOrDefaultAsync(e => e.Id == localClientId);
+        return client is null ? Results.NotFound() : Results.Ok(LocalClientDto.From(client));
     })
-    .Produces<ClientDto>()
+    .Produces<LocalClientDto>()
     .WithName("GetClient")
     .WithTags("clients");
 
-specificClient.MapGet("/logs",
-        async ([FromServices] DataContext dataContext, Guid clientId, [FromQuery] [Range(1, 100)] int count,
+specificLocalClient.MapGet("/logs",
+        async ([FromServices] DataContext dataContext, int localClientId,
+                [FromQuery] [Range(1, 100)] int count,
                 [FromQuery] int offset) =>
-            (await dataContext.ClientLogs.Where(e => e.LocalClientId == clientId)
+            (await dataContext.ClientLogs.Where(e => e.LocalClientId == localClientId)
                 .OrderByDescending(e => e.Timestamp)
                 .Skip(offset)
                 .Take(count)
@@ -77,10 +99,10 @@ specificClient.MapGet("/logs",
     .WithName("GetClientLogs")
     .WithTags("logs");
 
-specificClient.MapGet("/events",
-        async ([FromServices] DataContext dataContext, Guid clientId, [FromQuery] int count,
+specificLocalClient.MapGet("/events",
+        async ([FromServices] DataContext dataContext, int localClientId, [FromQuery] int count,
                 [FromQuery] int offset) =>
-            (await dataContext.ClientMessages.Where(e => e.LocalClientId == clientId)
+            (await dataContext.ClientMessages.Where(e => e.LocalClientId == localClientId)
                 .OrderByDescending(e => e.Timestamp)
                 .Skip(offset)
                 .Take(count)
@@ -89,11 +111,12 @@ specificClient.MapGet("/events",
     .WithName("GetClientEvents")
     .WithTags("events");
 
-specificClient.MapGet("/events/console",
-        async ([FromServices] DataContext dataContext, Guid clientId, [FromQuery] int count,
+specificLocalClient.MapGet("/events/console",
+        async ([FromServices] DataContext dataContext, int localClientId, [FromQuery] int count,
             [FromQuery] int offset) => {
             var requests = await dataContext.ClientMessages
-                .Where(e => e.LocalClientId == clientId && e.ShowInConsole)
+                .Where(e => e.LocalClientId == localClientId &&
+                            e.ShowInConsole)
                 .OrderBy(e => e.Timestamp)
                 .Skip(offset)
                 .Take(count)
@@ -113,31 +136,18 @@ specificClient.MapGet("/events/console",
     .WithTags("events");
 
 
-specificClient.MapPut("/nickname",
-        async ([FromServices] DataContext dataContext, Guid clientId, [FromBody] SetNicknameRequestDto request)
-            => {
-            var client = await dataContext.GlobalClients.FirstOrDefaultAsync(c => c.Id == clientId);
-            if (client is null) {
-                return Results.NotFound();
-            }
-
-            client.Nickname = request.Nickname;
-            await dataContext.SaveChangesAsync();
-            return Results.Ok();
-        })
-    .WithName("SetNickname")
-    .WithTags("clients");
-
-var clientActions = specificClient.MapGroup("/actions");
+var clientActions = specificLocalClient.MapGroup("/actions");
 
 clientActions.MapPost("/eval",
-        async ([FromServices] DataContext dataContext, Guid clientId, [FromBody] EvalRequestDto request) => {
-            var client = await dataContext.GlobalClients.FirstOrDefaultAsync(c => c.Id == clientId);
+        async ([FromServices] DataContext dataContext, int localClientId,
+            [FromBody] EvalRequestDto request) => {
+            var client = await dataContext.LocalClients.FirstOrDefaultAsync(c => c.Id == localClientId);
             if (client == null) {
                 return Results.NotFound();
             }
 
-            var eval = new ClientEvalRequest {
+            var eval = new ClientEvalRequest
+            {
                 Timestamp = DateTimeOffset.UtcNow,
                 LocalClientId = client.Id,
                 Code = request.Code,
@@ -150,7 +160,7 @@ clientActions.MapPost("/eval",
         })
     .Produces<InternalEvalRequest>()
     .Produces(StatusCodes.Status404NotFound)
-    .WithName("clientEval")
+    .WithName("RunClientEval")
     .WithTags("actions");
 
 app.Run();

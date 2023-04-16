@@ -24,34 +24,6 @@ namespace Pork.Shared.Migrations
 
             modelBuilder.HasSequence("ClientMessageSequence");
 
-            modelBuilder.Entity("Pork.Shared.Entities.Client", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsOnline")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset>("LastSeen")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Nickname")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RemoteIp")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Clients");
-                });
-
             modelBuilder.Entity("Pork.Shared.Entities.ClientLog", b =>
                 {
                     b.Property<int>("Id")
@@ -60,12 +32,12 @@ namespace Pork.Shared.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Level")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("LocalClientId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Message")
                         .IsRequired()
@@ -76,7 +48,59 @@ namespace Pork.Shared.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LocalClientId");
+
                     b.ToTable("ClientLogs");
+                });
+
+            modelBuilder.Entity("Pork.Shared.Entities.GlobalClient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Nickname")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RemoteIp")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RemoteIp")
+                        .IsUnique();
+
+                    b.ToTable("GlobalClients");
+                });
+
+            modelBuilder.Entity("Pork.Shared.Entities.LocalClient", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("GlobalClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsOnline")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastSeen")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SiteId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SiteId");
+
+                    b.HasIndex("GlobalClientId", "SiteId")
+                        .IsUnique();
+
+                    b.ToTable("LocalClients");
                 });
 
             modelBuilder.Entity("Pork.Shared.Entities.Messages.ClientMessage", b =>
@@ -88,11 +112,11 @@ namespace Pork.Shared.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseSequence(b.Property<int>("Id"));
 
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid?>("FlowId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("LocalClientId")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("ShowInConsole")
                         .HasColumnType("boolean");
@@ -102,9 +126,31 @@ namespace Pork.Shared.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LocalClientId");
+
                     b.ToTable((string)null);
 
                     b.UseTpcMappingStrategy();
+                });
+
+            modelBuilder.Entity("Pork.Shared.Entities.Site", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Sites");
                 });
 
             modelBuilder.Entity("Pork.Shared.Entities.Messages.Requests.ClientRequest", b =>
@@ -180,6 +226,47 @@ namespace Pork.Shared.Migrations
                         .HasColumnType("text");
 
                     b.ToTable("ClientHookResponses");
+                });
+
+            modelBuilder.Entity("Pork.Shared.Entities.ClientLog", b =>
+                {
+                    b.HasOne("Pork.Shared.Entities.LocalClient", "LocalClient")
+                        .WithMany()
+                        .HasForeignKey("LocalClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LocalClient");
+                });
+
+            modelBuilder.Entity("Pork.Shared.Entities.LocalClient", b =>
+                {
+                    b.HasOne("Pork.Shared.Entities.GlobalClient", "GlobalClient")
+                        .WithMany()
+                        .HasForeignKey("GlobalClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pork.Shared.Entities.Site", "Site")
+                        .WithMany()
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GlobalClient");
+
+                    b.Navigation("Site");
+                });
+
+            modelBuilder.Entity("Pork.Shared.Entities.Messages.ClientMessage", b =>
+                {
+                    b.HasOne("Pork.Shared.Entities.LocalClient", "LocalClient")
+                        .WithMany()
+                        .HasForeignKey("LocalClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LocalClient");
                 });
 
             modelBuilder.Entity("Pork.Shared.Entities.Messages.Requests.ClientEvalRequest", b =>

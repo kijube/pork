@@ -20,7 +20,8 @@ public class ClientConnector {
         // get existing global client or create a new one
         var globalClient = await dataContext.GlobalClients.FirstOrDefaultAsync(c => c.Id == clientId);
         if (globalClient is null) {
-            globalClient = new GlobalClient {
+            globalClient = new GlobalClient
+            {
                 Id = clientId
             };
             await dataContext.GlobalClients.AddAsync(globalClient);
@@ -30,11 +31,12 @@ public class ClientConnector {
 
         // get existing site or create a new one
         var origin = new Uri(context.Request.Headers["Origin"].ToString());
-        var site = await dataContext.Sites.FirstOrDefaultAsync(s => s.Host == origin.Host);
+        var site = await dataContext.Sites.FirstOrDefaultAsync(s => s.Key == origin.Host);
 
         if (site is null) {
-            site = new Site {
-                Host = origin.Host
+            site = new Site
+            {
+                Key = origin.Host
             };
             await dataContext.Sites.AddAsync(site);
         }
@@ -44,7 +46,8 @@ public class ClientConnector {
             c.GlobalClientId == globalClient.Id && c.SiteId == site.Id);
 
         if (localClient is null) {
-            localClient = new LocalClient {
+            localClient = new LocalClient
+            {
                 GlobalClient = globalClient,
                 Site = site
             };
@@ -65,7 +68,8 @@ public class ClientConnector {
         var hasClientId = context.Request.Cookies.TryGetValue("clientId", out var clientIdStr);
         if (!hasClientId || clientIdStr is null) {
             clientIdStr = Guid.NewGuid().ToString();
-            context.Response.Cookies.Append("clientId", clientIdStr, new CookieOptions {
+            context.Response.Cookies.Append("clientId", clientIdStr, new CookieOptions
+            {
                 Expires = null, SameSite = SameSiteMode.Strict, HttpOnly = true
             });
         }
@@ -83,7 +87,7 @@ public class ClientConnector {
             await ConnectionLock.WaitAsync();
             localClient = await GetOrCreateClientAsync(readContext, context, clientId);
             controller = new ClientController(readContext, writeContext,
-                ClientLogManager.GetClientLogger(localClient.GlobalClientId,
+                ClientLogManager.GetClientLogger(localClient.Id,
                     localClient.GlobalClient.RemoteIp ?? "[unknown]"),
                 webSocket,
                 localClient);

@@ -3,8 +3,8 @@ import { useParams } from "react-router-dom"
 import {
   InternalEvalRequest,
   InternalEvalResponse,
-  useClientEvalMutation,
   useGetClientConsoleEventsQuery,
+  useRunClientEvalMutation,
 } from "../../store/api"
 import {
   ArrowLeftIcon,
@@ -27,7 +27,7 @@ import { ScrollContainerContext } from "./client-index-page"
 export default function ClientConsolePage() {
   const { clientId } = useParams()
   const { data: events } = useGetClientConsoleEventsQuery(
-    { clientId: clientId!, count: 100, offset: 0 },
+    { localClientId: Number(clientId!), count: 100, offset: 0 },
     { skip: !clientId, pollingInterval: 5000 }
   )
   const scrollContext = useContext(ScrollContainerContext)
@@ -55,7 +55,7 @@ export default function ClientConsolePage() {
 
 function ConsoleInput() {
   const { clientId } = useParams()
-  const [evalCode, { isLoading }] = useClientEvalMutation()
+  const [evalCode, { isLoading }] = useRunClientEvalMutation()
   const [rows, setRows] = useState(2)
   const ref = useRef<HTMLTextAreaElement>(null)
 
@@ -77,7 +77,7 @@ function ConsoleInput() {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault()
         evalCode({
-          clientId: clientId!,
+          localClientId: Number(clientId!),
           evalRequestDto: { code: e.currentTarget.value },
         })
         e.currentTarget.value = ""
@@ -130,7 +130,9 @@ function EvalRequestEvent({ event }: { event: InternalEvalRequest }) {
               <ArrowPathIcon className="h-4 w-4 animate-spin" />
             )}
           </div>
-          <pre className="flex-1 text-neutral-400 break-words">{event.code}</pre>
+          <pre className="flex-1 break-words text-neutral-400">
+            {event.code}
+          </pre>
         </div>
       </ConsoleEntry>
       {response}
@@ -148,7 +150,7 @@ function ConsoleEntry({
   return (
     <div className="flex flex-row items-start">
       <div className="flex-1">{children}</div>
-      <div className="ml-4 w-24 flex flex-col pt-1 text-xs text-neutral-500">
+      <div className="ml-4 flex w-24 flex-col pt-1 text-xs text-neutral-500">
         {moment(timestamp).format(timestampFormat)}
       </div>
     </div>
@@ -165,7 +167,9 @@ function EvalResponseEvent({ event }: { event?: InternalEvalResponse }) {
         <div className="mr-4 grid h-6 w-6 place-items-center">
           <ArrowRightIcon className="h-4 w-4 text-neutral-500" />
         </div>
-        <pre className="break-all">{event.data.substring(1, event.data.length-1)}</pre>
+        <pre className="break-all">
+          {event.data.substring(1, event.data.length - 1)}
+        </pre>
       </div>
     </ConsoleEntry>
   )

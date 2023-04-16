@@ -20,7 +20,7 @@ public static class ClientLogManager {
                 .MinimumLevel.Debug()
                 .WriteTo.Console(
                     outputTemplate:
-                    "{Timestamp:dd.MM.yyyy HH:mm:ss} | {ClientId} | {Level:u3} | {Message:lj}{NewLine}{Exception}")
+                    "{Timestamp:dd.MM.yyyy HH:mm:ss} | {LocalClientId} | {Level:u3} | {Message:lj}{NewLine}{Exception}")
                 .WriteTo.Sink(new PeriodicBatchingSink(new ClientLogSink(dataContext),
                     new PeriodicBatchingSinkOptions()))
                 .CreateLogger();
@@ -28,13 +28,13 @@ public static class ClientLogManager {
         }
     }
 
-    public static ILogger GetClientLogger(Guid clientId, string remoteIp) {
+    public static ILogger GetClientLogger(int clientId, string remoteIp) {
         if (logger is null) {
             throw new InvalidOperationException("ClientLogManager not initialized");
         }
 
         return new LoggerConfiguration()
-            .Enrich.WithProperty("ClientId", clientId)
+            .Enrich.WithProperty("LocalClientId", clientId)
             .Enrich.WithProperty("RemoteIp", remoteIp)
             .WriteTo.Logger(logger)
             .CreateLogger();
@@ -58,7 +58,7 @@ public class ClientLogSink : IBatchedLogEventSink {
 
                 return new ClientLog()
                 {
-                    LocalClientId = Guid.Parse(ev.Properties["ClientId"].ToString()),
+                    LocalClientId = int.Parse(ev.Properties["LocalClientId"].ToString()),
                     Level = ev.Level.ToString(),
                     Message = msg,
                     Timestamp = ev.Timestamp.ToUniversalTime()

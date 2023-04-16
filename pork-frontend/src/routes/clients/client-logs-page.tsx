@@ -19,7 +19,7 @@ function Logs() {
     isLoading,
     isSuccess,
   } = useGetClientLogsQuery(
-    { clientId: clientId!, count: 100, offset },
+    { localClientId: Number(clientId!), count: 100, offset },
     { pollingInterval: 5000 }
   )
   if (isLoading) {

@@ -3,7 +3,7 @@ import { useGetClientQuery, useSetNicknameMutation } from "../store/api"
 
 export default function Nickname({ clientId }: { clientId?: string }) {
   const { data, isLoading, isSuccess } = useGetClientQuery(
-    { clientId: clientId! },
+    { localClientId: Number(clientId!) },
     { skip: !clientId }
   )
 
@@ -16,7 +16,7 @@ export default function Nickname({ clientId }: { clientId?: string }) {
 
   function edit() {
     setIsEditing(true)
-    setCurrentValue(data?.nickname ?? "")
+    setCurrentValue(data?.globalClient?.nickname ?? "")
     setTimeout(() => {
       ;(ref.current as any).focus()
       ;(ref.current as any).setSelectionRange(0, 9999)
@@ -24,12 +24,12 @@ export default function Nickname({ clientId }: { clientId?: string }) {
   }
 
   function save() {
-    if (!clientId) {
+    if (!clientId || !data) {
       return
     }
     setIsEditing(false)
     setNickname({
-      clientId: clientId,
+      globalClientId: data.globalClient.id,
       setNicknameRequestDto: { nickname: currentValue },
     })
   }
@@ -81,7 +81,7 @@ export default function Nickname({ clientId }: { clientId?: string }) {
     <button onClick={edit} className="group text-sm">
       (
       <span className="group-hover:underline">
-        {data.nickname ? data.nickname : "set nickname"}
+        {data.globalClient?.nickname ? data.globalClient.nickname : "set nickname"}
       </span>
       )
     </button>

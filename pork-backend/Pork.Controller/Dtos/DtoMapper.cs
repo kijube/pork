@@ -5,7 +5,7 @@ using Pork.Shared.Entities.Messages.Responses;
 namespace Pork.Controller.Dtos;
 
 public static class DtoMapper {
-    public static ClientResponse MapExternalResponse(Guid clientId, ExternalResponse response) {
+    public static ClientResponse MapExternalResponse(int clientId, ExternalResponse response) {
         ClientResponse result = response switch
         {
             ExternalEvalResponse evalResponse => new ClientEvalResponse

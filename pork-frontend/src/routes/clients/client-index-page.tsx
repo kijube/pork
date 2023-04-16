@@ -7,9 +7,8 @@ import ClientTabs from "../../components/client-tabs"
 import { timestampFormat } from "../../utils"
 import { createContext, RefObject, useRef } from "react"
 
-export const ScrollContainerContext = createContext<RefObject<HTMLDivElement> | null>(
-  null
-)
+export const ScrollContainerContext =
+  createContext<RefObject<HTMLDivElement> | null>(null)
 
 export default function ClientIndexPage() {
   const { clientId } = useParams()
@@ -17,7 +16,10 @@ export default function ClientIndexPage() {
     data: client,
     isLoading,
     isSuccess,
-  } = useGetClientQuery({ clientId: clientId! }, { pollingInterval: 3000 })
+  } = useGetClientQuery(
+    { localClientId: Number(clientId!) },
+    { pollingInterval: 3000 }
+  )
   const ref = useRef<HTMLDivElement>(null)
   return (
     <div className="flex min-h-full flex-col items-stretch">
@@ -25,7 +27,7 @@ export default function ClientIndexPage() {
         <div className="flex w-full flex-row items-center gap-2 border-b border-neutral-700 px-2 pb-1">
           <OnlineIndicator className="h-4 w-4" isOnline={client?.isOnline} />
           <h1 className="text-2xl font-bold">
-            {isSuccess ? client.remoteIp : "..."}
+            {isSuccess ? client.globalClient.remoteIp : "..."}
           </h1>
           <Nickname clientId={clientId} />
           {isSuccess && (

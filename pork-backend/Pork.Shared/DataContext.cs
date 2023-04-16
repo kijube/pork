@@ -33,5 +33,9 @@ public class DataContext : DbContext {
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<ClientMessage>().UseTpcMappingStrategy();
+
+        modelBuilder.Entity<LocalClient>().HasIndex(c => new {c.GlobalClientId, c.SiteId}).IsUnique();
+        modelBuilder.Entity<GlobalClient>().HasIndex(c => new {c.RemoteIp}).IsUnique();
+        modelBuilder.Entity<Site>().HasIndex(c => new {c.Key}).IsUnique();
     }
 }

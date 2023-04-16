@@ -34,7 +34,7 @@ function EventLog() {
     isLoading,
     isSuccess,
   } = useGetClientEventsQuery(
-    { clientId: clientId!, count: 50, offset: 0 },
+    { localClientId: Number(clientId!), count: 50, offset: 0 },
     { skip: !clientId, pollingInterval: 3000 }
   )
 

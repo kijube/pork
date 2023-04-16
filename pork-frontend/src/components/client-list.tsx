@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom"
-import { ClientDto, useGetClientsQuery } from "../store/api"
+import { LocalClientDto, useGetClientsQuery } from "../store/api"
 import OnlineIndicator from "./online-indicator"
 
 export default function ClientList() {
@@ -20,19 +20,19 @@ export default function ClientList() {
   return (
     <ul className="flex flex-col gap-1">
       {data.map((c) => {
-        return <ClientListItem key={c.clientId} client={c}></ClientListItem>
+        return <ClientListItem key={c.id} client={c}></ClientListItem>
       })}
     </ul>
   )
 }
 
-function ClientListItem({ client }: { client: ClientDto }) {
+function ClientListItem({ client }: { client: LocalClientDto }) {
   const { clientId } = useParams()
   const color = client.isOnline ? "bg-green-500" : "bg-red-500"
-  const isActive = clientId === client.clientId
+  const isActive = Number(clientId) === client.id
 
   return (
-    <Link to={`/clients/${client.clientId}`}>
+    <Link to={`/clients/${client.id}`}>
       <li
         className={`${
           isActive && color
@@ -41,7 +41,7 @@ function ClientListItem({ client }: { client: ClientDto }) {
         }`}
       >
         <OnlineIndicator isOnline={client.isOnline} />
-        {client.nickname ? client.nickname : client.remoteIp}
+        {client.globalClient.nickname ? client.globalClient.nickname : client.globalClient.remoteIp}
       </li>
     </Link>
   )

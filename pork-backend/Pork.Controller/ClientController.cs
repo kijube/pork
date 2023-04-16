@@ -68,7 +68,7 @@ public class ClientController : IAsyncDisposable {
                 return;
             }
 
-            var clientResponse = DtoMapper.MapExternalResponse(localClient.GlobalClientId, response);
+            var clientResponse = DtoMapper.MapExternalResponse(localClient.Id, response);
 
             switch (clientResponse) {
                 case ClientEvalResponse {FlowId: not null} eval:
