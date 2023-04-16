@@ -21,11 +21,19 @@ export const enhancedApi = api.enhanceEndpoints({
   endpoints: {
     getClient: {
       providesTags: (result, error, arg) =>
-        result ? [{ type: "clients", id: arg.localClientId }] : [],
+        result ? [{ type: "clients", id: result.globalClient.id }] : [],
     },
     getClients: {
       providesTags: (result, error, arg) =>
-        result ? providesList(result as any, "clients") : [],
+        result
+          ? [
+              { type: "clients", id: "LIST" },
+              ...result.map((c) => ({
+                type: "clients" as const,
+                id: c.globalClient.id,
+              })),
+            ]
+          : [],
     },
     setNickname: {
       invalidatesTags: (result, error, arg) =>
@@ -37,12 +45,7 @@ export const enhancedApi = api.enhanceEndpoints({
     },
     runClientEval: {
       invalidatesTags: (result, error, arg) =>
-        !error
-          ? [
-              { type: "clients", id: arg.localClientId },
-              { type: "events", id: "LIST" },
-            ]
-          : [],
+        result ? [{ type: "events", id: "LIST" }] : [],
     },
   },
 })
