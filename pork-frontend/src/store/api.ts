@@ -1,34 +1,29 @@
 import { emptySplitApi as api } from "./empty-api";
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
-    runClientEval: build.mutation<
-      RunClientEvalApiResponse,
-      RunClientEvalApiArg
+    getLocalClients: build.query<
+      GetLocalClientsApiResponse,
+      GetLocalClientsApiArg
     >({
-      query: (queryArg) => ({
-        url: `/clients/local/${queryArg.localClientId}/actions/eval`,
-        method: "POST",
-        body: queryArg.evalRequestDto,
-      }),
+      query: () => ({ url: `/clients/local` }),
     }),
-    getClients: build.query<GetClientsApiResponse, GetClientsApiArg>({
-      query: () => ({ url: `/clients` }),
-    }),
-    setNickname: build.mutation<SetNicknameApiResponse, SetNicknameApiArg>({
-      query: (queryArg) => ({
-        url: `/clients/global/${queryArg.globalClientId}/nickname`,
-        method: "PUT",
-        body: queryArg.setNicknameRequestDto,
-      }),
-    }),
-    getClient: build.query<GetClientApiResponse, GetClientApiArg>({
+    getLocalClientById: build.query<
+      GetLocalClientByIdApiResponse,
+      GetLocalClientByIdApiArg
+    >({
       query: (queryArg) => ({
         url: `/clients/local/${queryArg.localClientId}`,
       }),
     }),
-    getClientEvents: build.query<
-      GetClientEventsApiResponse,
-      GetClientEventsApiArg
+    getClientLogs: build.query<GetClientLogsApiResponse, GetClientLogsApiArg>({
+      query: (queryArg) => ({
+        url: `/clients/local/${queryArg.localClientId}/logs`,
+        params: { count: queryArg.count, offset: queryArg.offset },
+      }),
+    }),
+    getLocalClientEvents: build.query<
+      GetLocalClientEventsApiResponse,
+      GetLocalClientEventsApiArg
     >({
       query: (queryArg) => ({
         url: `/clients/local/${queryArg.localClientId}/events`,
@@ -44,34 +39,51 @@ const injectedRtkApi = api.injectEndpoints({
         params: { count: queryArg.count, offset: queryArg.offset },
       }),
     }),
-    getClientLogs: build.query<GetClientLogsApiResponse, GetClientLogsApiArg>({
+    runClientEval: build.mutation<
+      RunClientEvalApiResponse,
+      RunClientEvalApiArg
+    >({
       query: (queryArg) => ({
-        url: `/clients/local/${queryArg.localClientId}/logs`,
-        params: { count: queryArg.count, offset: queryArg.offset },
+        url: `/clients/local/${queryArg.localClientId}/actions/eval`,
+        method: "POST",
+        body: queryArg.evalRequestDto,
       }),
+    }),
+    setClientNickname: build.mutation<
+      SetClientNicknameApiResponse,
+      SetClientNicknameApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/clients/global/${queryArg.globalClientId}/nickname`,
+        method: "PUT",
+        body: queryArg.setNicknameRequestDto,
+      }),
+    }),
+    getSites: build.query<GetSitesApiResponse, GetSitesApiArg>({
+      query: () => ({ url: `/sites` }),
+    }),
+    getSiteByKey: build.query<GetSiteByKeyApiResponse, GetSiteByKeyApiArg>({
+      query: (queryArg) => ({ url: `/sites/${queryArg.siteKey}` }),
     }),
   }),
   overrideExisting: false,
 });
 export { injectedRtkApi as api };
-export type RunClientEvalApiResponse =
-  /** status 200 Success */ InternalEvalRequest;
-export type RunClientEvalApiArg = {
-  localClientId: number;
-  evalRequestDto: EvalRequestDto;
-};
-export type GetClientsApiResponse = /** status 200 Success */ LocalClientDto[];
-export type GetClientsApiArg = void;
-export type SetNicknameApiResponse = unknown;
-export type SetNicknameApiArg = {
-  globalClientId: string;
-  setNicknameRequestDto: SetNicknameRequestDto;
-};
-export type GetClientApiResponse = /** status 200 Success */ LocalClientDto;
-export type GetClientApiArg = {
+export type GetLocalClientsApiResponse =
+  /** status 200 Success */ LocalClientDto[];
+export type GetLocalClientsApiArg = void;
+export type GetLocalClientByIdApiResponse =
+  /** status 200 Success */ LocalClientDto;
+export type GetLocalClientByIdApiArg = {
   localClientId: number;
 };
-export type GetClientEventsApiResponse = /** status 200 Success */ (
+export type GetClientLogsApiResponse = /** status 200 Success */ ClientLogDto[];
+export type GetClientLogsApiArg = {
+  localClientId: number;
+  count: number;
+  offset: number;
+};
+export type GetLocalClientEventsApiResponse = /** status 200 Success */ (
   | InternalMessage
   | InternalEvalResponse
   | InternalFailureResponse
@@ -80,7 +92,7 @@ export type GetClientEventsApiResponse = /** status 200 Success */ (
   | InternalEvalRequest
   | InternalRequest
 )[];
-export type GetClientEventsApiArg = {
+export type GetLocalClientEventsApiArg = {
   localClientId: number;
   count: number;
   offset: number;
@@ -99,50 +111,52 @@ export type GetClientConsoleEventsApiArg = {
   count: number;
   offset: number;
 };
-export type GetClientLogsApiResponse = /** status 200 Success */ ClientLogDto[];
-export type GetClientLogsApiArg = {
+export type RunClientEvalApiResponse =
+  /** status 200 Success */ InternalEvalRequest;
+export type RunClientEvalApiArg = {
   localClientId: number;
-  count: number;
-  offset: number;
+  evalRequestDto: EvalRequestDto;
 };
-export type InternalMessage = {
-  type: string;
-  flowId: string | null;
-  timestamp: string;
+export type SetClientNicknameApiResponse = unknown;
+export type SetClientNicknameApiArg = {
+  globalClientId: string;
+  setNicknameRequestDto: SetNicknameRequestDto;
 };
-export type InternalRequest = InternalMessage & {
-  sent: boolean;
-  sentAt: string | null;
-};
-export type InternalResponse = InternalMessage;
-export type InternalEvalResponse = InternalResponse & {
-  data: string;
-};
-export type InternalEvalRequest = InternalRequest & {
-  code: string;
-  response: InternalEvalResponse;
-};
-export type EvalRequestDto = {
-  code: string;
+export type GetSitesApiResponse = /** status 200 Success */ SiteDto[];
+export type GetSitesApiArg = void;
+export type GetSiteByKeyApiResponse = /** status 200 Success */ SiteDto;
+export type GetSiteByKeyApiArg = {
+  siteKey: string;
 };
 export type GlobalClientDto = {
   id: string;
   remoteIp: string | null;
   nickname: string | null;
 };
-export type SiteDto = {
+export type SiteNameDto = {
   id: number;
   key: string;
 };
 export type LocalClientDto = {
   id: number;
   globalClient: GlobalClientDto;
-  site: SiteDto;
+  site: SiteNameDto;
   isOnline: boolean;
   lastSeen: string;
 };
-export type SetNicknameRequestDto = {
-  nickname: string;
+export type ClientLogDto = {
+  level: string;
+  timestamp: string;
+  message: string;
+};
+export type InternalMessage = {
+  type: string;
+  flowId: string | null;
+  timestamp: string;
+};
+export type InternalResponse = InternalMessage;
+export type InternalEvalResponse = InternalResponse & {
+  data: string;
 };
 export type InternalFailureResponse = InternalResponse & {
   error: string;
@@ -153,17 +167,33 @@ export type InternalHookResponse = InternalResponse & {
   args: string | null;
   result: string | null;
 };
-export type ClientLogDto = {
-  level: string;
-  timestamp: string;
-  message: string;
+export type InternalRequest = InternalMessage & {
+  sent: boolean;
+  sentAt: string | null;
+};
+export type InternalEvalRequest = InternalRequest & {
+  code: string;
+  response: InternalEvalResponse;
+};
+export type EvalRequestDto = {
+  code: string;
+};
+export type SetNicknameRequestDto = {
+  nickname: string;
+};
+export type SiteDto = {
+  id: number;
+  key: string;
+  localClients: LocalClientDto[];
 };
 export const {
-  useRunClientEvalMutation,
-  useGetClientsQuery,
-  useSetNicknameMutation,
-  useGetClientQuery,
-  useGetClientEventsQuery,
-  useGetClientConsoleEventsQuery,
+  useGetLocalClientsQuery,
+  useGetLocalClientByIdQuery,
   useGetClientLogsQuery,
+  useGetLocalClientEventsQuery,
+  useGetClientConsoleEventsQuery,
+  useRunClientEvalMutation,
+  useSetClientNicknameMutation,
+  useGetSitesQuery,
+  useGetSiteByKeyQuery,
 } = injectedRtkApi;

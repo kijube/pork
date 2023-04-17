@@ -1,14 +1,11 @@
 import { Link, useParams } from "react-router-dom"
-import { LocalClientDto, useGetClientsQuery } from "../store/api"
+import { LocalClientDto, SiteDto, useGetSitesQuery } from "../store/api"
 import OnlineIndicator from "./online-indicator"
 
 export default function ClientList() {
-  const { data, isLoading, isSuccess } = useGetClientsQuery(
-    {} as unknown as void,
-    {
-      pollingInterval: 3000,
-    }
-  )
+  const { data, isLoading, isSuccess } = useGetSitesQuery(undefined as any, {
+    pollingInterval: 3000,
+  })
   if (isLoading) {
     return <div>loading...</div>
   }
@@ -18,11 +15,24 @@ export default function ClientList() {
   }
 
   return (
-    <ul className="flex flex-col gap-1">
-      {data.map((c) => {
-        return <ClientListItem key={c.id} client={c}></ClientListItem>
+    <ol className="flex flex-col gap-1">
+      {data.map((s) => {
+        return <SiteListItem key={s.key} site={s}></SiteListItem>
       })}
-    </ul>
+    </ol>
+  )
+}
+
+function SiteListItem({ site }: { site: SiteDto }) {
+  return (
+    <li>
+      <h4 className="font-bold">{site.key}</h4>
+      <ol>
+        {site.localClients.map((c) => {
+          return <ClientListItem key={c.id} client={c}></ClientListItem>
+        })}
+      </ol>
+    </li>
   )
 }
 
@@ -32,7 +42,7 @@ function ClientListItem({ client }: { client: LocalClientDto }) {
   const isActive = Number(clientId) === client.id
 
   return (
-    <Link to={`/clients/${client.id}`}>
+    <Link to={`/sites/${client.site.key}/clients/${client.id}`}>
       <li
         className={`${
           isActive && color
@@ -41,7 +51,9 @@ function ClientListItem({ client }: { client: LocalClientDto }) {
         }`}
       >
         <OnlineIndicator isOnline={client.isOnline} />
-        {client.globalClient.nickname ? client.globalClient.nickname : client.globalClient.remoteIp}
+        {client.globalClient.nickname
+          ? client.globalClient.nickname
+          : client.globalClient.remoteIp}
       </li>
     </Link>
   )

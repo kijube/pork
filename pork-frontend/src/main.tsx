@@ -12,6 +12,7 @@ import ClientIndexPage from "./routes/clients/client-index-page"
 import ClientDashboardPage from "./routes/clients/client-dashboard-page"
 import ClientLogsPage from "./routes/clients/client-logs-page"
 import ClientConsolePage from "./routes/clients/client-console-page"
+import SiteIndexPage from "./routes/sites/site-index-page"
 
 const router = createBrowserRouter([
   {
@@ -23,15 +24,21 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: "/clients/:clientId",
-        element: <ClientIndexPage />,
+        path: "/sites/:siteKey",
+        element: <SiteIndexPage />,
         children: [
           {
-            path: "",
-            element: <ClientDashboardPage />,
+            path: "clients/:clientId",
+            element: <ClientIndexPage />,
+            children: [
+              {
+                path: "",
+                element: <ClientDashboardPage />,
+              },
+              { path: "logs", element: <ClientLogsPage /> },
+              { path: "console", element: <ClientConsolePage /> },
+            ],
           },
-          { path: "logs", element: <ClientLogsPage /> },
-          {path: "console", element: <ClientConsolePage/>}
         ],
       },
     ],

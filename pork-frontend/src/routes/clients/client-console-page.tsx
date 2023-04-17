@@ -6,12 +6,7 @@ import {
   useGetClientConsoleEventsQuery,
   useRunClientEvalMutation,
 } from "../../store/api"
-import {
-  ArrowLeftIcon,
-  ArrowPathIcon,
-  ArrowRightIcon,
-  ChevronDoubleLeftIcon,
-} from "@heroicons/react/20/solid"
+
 import { ClientConsoleEvent } from "../../store/enhanced-api"
 import { timestampFormat } from "../../utils"
 import {
@@ -23,6 +18,7 @@ import {
   useState,
 } from "react"
 import { ScrollContainerContext } from "./client-index-page"
+import { ArrowLeftIcon, ArrowRightIcon, RefreshCwIcon } from "lucide-react"
 
 export default function ClientConsolePage() {
   const { clientId } = useParams()
@@ -39,7 +35,7 @@ export default function ClientConsolePage() {
   }, [events])
 
   return (
-    <div className="flex w-full flex-col break-all px-2 pt-4 text-base">
+    <div className="flex w-full flex-col break-all px-2 text-base">
       {events?.map((ev, i) => (
         <div
           key={"" + ev.flowId + ev.timestamp}
@@ -125,9 +121,9 @@ function EvalRequestEvent({ event }: { event: InternalEvalRequest }) {
         <div className="flex flex-row items-start">
           <div className="mr-4 grid h-6 w-6 place-items-center">
             {event.sent ? (
-              <ArrowLeftIcon className="h-4 w-4 text-neutral-500" />
+              <ArrowLeftIcon size={14} className="text-neutral-500" />
             ) : (
-              <ArrowPathIcon className="h-4 w-4 animate-spin" />
+              <RefreshCwIcon size={14} className="animate-spin" />
             )}
           </div>
           <pre className="flex-1 break-words text-neutral-400">
@@ -165,7 +161,7 @@ function EvalResponseEvent({ event }: { event?: InternalEvalResponse }) {
     <ConsoleEntry timestamp={event.timestamp}>
       <div className="flex flex-row items-start">
         <div className="mr-4 grid h-6 w-6 place-items-center">
-          <ArrowRightIcon className="h-4 w-4 text-neutral-500" />
+          <ArrowRightIcon size={14} className=" text-neutral-500" />
         </div>
         <pre className="break-all">
           {event.data.substring(1, event.data.length - 1)}

@@ -1,18 +1,19 @@
 import { useRef, useState } from "react"
-import { useGetClientQuery, useSetNicknameMutation } from "../store/api"
+import {
+  useGetLocalClientByIdQuery,
+  useSetClientNicknameMutation,
+} from "../store/api"
+import { useGetCurrentLocalClient } from "../hooks"
 
-export default function Nickname({ clientId }: { clientId?: string }) {
-  const { data, isLoading, isSuccess } = useGetClientQuery(
-    { localClientId: Number(clientId!) },
-    { skip: !clientId }
-  )
+export default function Nickname() {
+  const { data, clientId, isLoading, isSuccess } = useGetCurrentLocalClient()
 
   const ref = useRef(null)
 
   const [isEditing, setIsEditing] = useState(false)
   const [currentValue, setCurrentValue] = useState("")
 
-  const [setNickname, { isLoading: isSetting }] = useSetNicknameMutation()
+  const [setNickname, { isLoading: isSetting }] = useSetClientNicknameMutation()
 
   function edit() {
     setIsEditing(true)
@@ -81,7 +82,9 @@ export default function Nickname({ clientId }: { clientId?: string }) {
     <button onClick={edit} className="group text-sm">
       (
       <span className="group-hover:underline">
-        {data.globalClient?.nickname ? data.globalClient.nickname : "set nickname"}
+        {data.globalClient?.nickname
+          ? data.globalClient.nickname
+          : "set nickname"}
       </span>
       )
     </button>

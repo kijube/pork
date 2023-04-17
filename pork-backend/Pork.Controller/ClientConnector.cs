@@ -31,12 +31,13 @@ public class ClientConnector {
 
         // get existing site or create a new one
         var origin = new Uri(context.Request.Headers["Origin"].ToString());
-        var site = await dataContext.Sites.FirstOrDefaultAsync(s => s.Key == origin.Host);
+        var site = await dataContext.Sites.FirstOrDefaultAsync(s => s.Key == Site.NormalizeKey(origin.Host));
 
         if (site is null) {
             site = new Site
             {
-                Key = origin.Host
+                Key = Site.NormalizeKey(origin.Host),
+                LocalClients = new List<LocalClient>()
             };
             await dataContext.Sites.AddAsync(site);
         }
@@ -98,6 +99,10 @@ public class ClientConnector {
             }
 
             ClientManager.Controllers.TryAdd(clientId, controller);
+        }
+        catch (Exception e) {
+            Log.Error(e, "An error occurred while handling a client connection");
+            return;
         }
         finally {
             ConnectionLock.Release();

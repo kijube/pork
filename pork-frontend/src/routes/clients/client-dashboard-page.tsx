@@ -1,10 +1,10 @@
 import moment from "moment"
 import { useParams } from "react-router-dom"
-import { useGetClientEventsQuery } from "../../store/api"
+import { useGetLocalClientEventsQuery } from "../../store/api"
 
 export default function ClientDashboardPage() {
   return (
-    <main className="grid min-h-full w-full auto-rows-auto grid-cols-5 gap-2 p-2">
+    <main className="grid min-h-full w-full auto-rows-auto grid-cols-5 gap-2 p-2 pt-0">
       <div className="relative col-span-2 h-full overflow-y-scroll rounded border border-neutral-700 text-sm">
         <div className="absolute h-full w-full">
           <Evaluator />
@@ -33,7 +33,7 @@ function EventLog() {
     data: events,
     isLoading,
     isSuccess,
-  } = useGetClientEventsQuery(
+  } = useGetLocalClientEventsQuery(
     { localClientId: Number(clientId!), count: 50, offset: 0 },
     { skip: !clientId, pollingInterval: 3000 }
   )

@@ -2,6 +2,7 @@ import moment from "moment"
 import { useState } from "react"
 import { useParams } from "react-router-dom"
 import { useGetClientLogsQuery } from "../../store/api"
+import { useGetClientId } from "../../hooks"
 
 export default function ClientLogsPage() {
   return (
@@ -12,15 +13,15 @@ export default function ClientLogsPage() {
 }
 
 function Logs() {
-  const { clientId } = useParams()
+  const clientId = useGetClientId()
   const [offset, setOffset] = useState(0)
   const {
     data: logs,
     isLoading,
     isSuccess,
   } = useGetClientLogsQuery(
-    { localClientId: Number(clientId!), count: 100, offset },
-    { pollingInterval: 5000 }
+    { localClientId: clientId!, count: 100, offset },
+    { pollingInterval: 5000, skip: !clientId }
   )
   if (isLoading) {
     return <div>loading...</div>
@@ -36,7 +37,7 @@ function Logs() {
         {logs?.map((l) => {
           return (
             <tr
-              key={l.timestamp+l.message}
+              key={l.timestamp + l.message}
               className={`${
                 levelColors[l.level!]
               } odd:bg-neutral-800 odd:bg-opacity-25`}
@@ -47,7 +48,7 @@ function Logs() {
               <td className="py-1 pl-4 opacity-50">
                 {moment(l.timestamp).format("DD.MM. HH:mm:ss")}
               </td>
-              <td className="py-1 pl-8 pr-4 break-all">{l.message}</td>
+              <td className="break-all py-1 pl-8 pr-4">{l.message}</td>
             </tr>
           )
         })}

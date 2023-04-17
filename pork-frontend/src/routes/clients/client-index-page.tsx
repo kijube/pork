@@ -1,35 +1,56 @@
 import moment from "moment"
-import { Outlet, useParams } from "react-router-dom"
+import { Outlet } from "react-router-dom"
 import OnlineIndicator from "../../components/online-indicator"
-import { useGetClientQuery } from "../../store/api"
 import Nickname from "../../components/nickname"
-import ClientTabs from "../../components/client-tabs"
+import Tabs, { TabProps } from "../../components/tabs"
 import { timestampFormat } from "../../utils"
-import { createContext, RefObject, useRef } from "react"
+import { createContext, RefObject, useMemo, useRef } from "react"
+import { useGetCurrentLocalClient, useGetSiteKey } from "../../hooks"
+import { ChevronRightSquareIcon, ScrollIcon, UserIcon } from "lucide-react"
+import TextWithIcon from "../../components/text-with-icon"
 
 export const ScrollContainerContext =
   createContext<RefObject<HTMLDivElement> | null>(null)
 
 export default function ClientIndexPage() {
-  const { clientId } = useParams()
-  const {
-    data: client,
-    isLoading,
-    isSuccess,
-  } = useGetClientQuery(
-    { localClientId: Number(clientId!) },
-    { pollingInterval: 3000 }
-  )
+  const { data: client, isSuccess, clientId } = useGetCurrentLocalClient()
+  const siteKey = useGetSiteKey()
   const ref = useRef<HTMLDivElement>(null)
+  const tabProps = useMemo<TabProps>(
+    () => ({
+      rootPath: `/sites/${siteKey}/clients/${clientId}`,
+      tabs: [
+        {
+          name: <TextWithIcon icon={<UserIcon size={14} />}>Client</TextWithIcon>,
+          path: "",
+        },
+        {
+          name: (
+            <TextWithIcon icon={<ChevronRightSquareIcon size={14} />}>
+              Console
+            </TextWithIcon>
+          ),
+          path: "/console",
+        },
+        {
+          name: (
+            <TextWithIcon icon={<ScrollIcon size={14} />}>Logs</TextWithIcon>
+          ),
+          path: "/logs",
+        },
+      ],
+    }),
+    [siteKey, clientId]
+  )
   return (
-    <div className="flex min-h-full flex-col items-stretch">
+    <div className="flex h-full flex-col items-stretch gap-2">
       <nav className="w-full bg-neutral-900 p-2 pb-0">
-        <div className="flex w-full flex-row items-center gap-2 border-b border-neutral-700 px-2 pb-1">
+        <div className="flex w-full flex-row items-center gap-2 px-2">
           <OnlineIndicator className="h-4 w-4" isOnline={client?.isOnline} />
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-xl font-bold">
             {isSuccess ? client.globalClient.remoteIp : "..."}
           </h1>
-          <Nickname clientId={clientId} />
+          <Nickname />
           {isSuccess && (
             <>
               <span className="text-xs text-neutral-600">
@@ -37,7 +58,8 @@ export default function ClientIndexPage() {
               </span>
             </>
           )}
-          <ClientTabs clientId={clientId} />
+          <div className="flex-1"></div>
+          <Tabs {...tabProps} />
         </div>
       </nav>
       <ScrollContainerContext.Provider value={ref}>
