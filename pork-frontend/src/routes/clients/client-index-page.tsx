@@ -43,7 +43,7 @@ export default function ClientIndexPage() {
   )
   return (
     <div className="flex h-full flex-col items-stretch gap-2">
-      <nav className="w-full bg-neutral-900 p-2 pb-0">
+      <nav className="w-full bg-neutral-900 px-2">
         <div className="flex w-full flex-row items-center gap-2 px-2">
           <OnlineIndicator className="h-4 w-4" isOnline={client?.isOnline} />
           <h1 className="text-xl font-bold">
