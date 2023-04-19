@@ -3,14 +3,13 @@ import { Outlet } from "react-router-dom"
 import OnlineIndicator from "../../components/online-indicator"
 import Nickname from "../../components/nickname"
 import Tabs, { TabProps } from "../../components/tabs"
-import { timestampFormat } from "../../utils"
+import { ScrollContainerContext, timestampFormat } from "../../utils"
 import { createContext, RefObject, useMemo, useRef } from "react"
 import { useGetCurrentLocalClient, useGetSiteKey } from "../../hooks"
 import { ChevronRightSquareIcon, ScrollIcon, UserIcon } from "lucide-react"
 import TextWithIcon from "../../components/text-with-icon"
 
-export const ScrollContainerContext =
-  createContext<RefObject<HTMLDivElement> | null>(null)
+
 
 export default function ClientIndexPage() {
   const { data: client, isSuccess, clientId } = useGetCurrentLocalClient()

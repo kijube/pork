@@ -3,12 +3,13 @@ import { useParams } from "react-router-dom"
 import {
     InternalEvalRequest,
     InternalEvalResponse,
+    InternalHookResponse,
     useGetClientConsoleEventsQuery,
     useRunClientEvalMutation,
 } from "../../store/api"
 
 import { ClientConsoleEvent } from "../../store/enhanced-api"
-import { timestampFormat } from "../../utils"
+import { ScrollContainerContext, timestampFormat } from "../../utils"
 import {
     ReactNode,
     useCallback,
@@ -17,8 +18,12 @@ import {
     useRef,
     useState,
 } from "react"
-import { ScrollContainerContext } from "./client-index-page"
-import { ArrowLeftIcon, ArrowRightIcon, RefreshCwIcon } from "lucide-react"
+import {
+    ArrowLeftIcon,
+    ArrowRightIcon,
+    InfoIcon,
+    RefreshCwIcon,
+} from "lucide-react"
 
 export default function ClientConsolePage() {
     const { clientId } = useParams()
@@ -106,9 +111,33 @@ function ConsoleEvent({ event }: { event: ClientConsoleEvent }) {
     switch (event.type) {
         case "evalreq":
             return <EvalRequestEvent event={event as InternalEvalRequest} />
+        case "hook":
+            const hook = event as InternalHookResponse
+            if (hook.method.startsWith("console.")) {
+                return <HookConsoleEvent event={hook} />
+            }
         default:
             return <div>{JSON.stringify(event)}</div>
     }
+}
+
+function HookConsoleEvent({ event }: { event: InternalHookResponse }) {
+    return (
+        <ConsoleEntry timestamp={event.timestamp}>
+            <div className="flex flex-row items-start">
+                <div className="mr-4 grid h-6 w-6 place-items-center">
+                    <InfoIcon size={14} className=" text-neutral-500" />
+                </div>
+                <pre className="break-all">
+                    {event.method.replace("console.", "")}{" "}
+                    {event.args &&
+                        JSON.parse(event.args)
+                            .map((a: any) => JSON.stringify(a))
+                            .join(" ")}
+                </pre>
+            </div>
+        </ConsoleEntry>
+    )
 }
 
 function EvalRequestEvent({ event }: { event: InternalEvalRequest }) {

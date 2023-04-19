@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pork.Manager.Dtos;
 using Pork.Manager.Dtos.Messages.Site;
@@ -12,23 +13,23 @@ public static class SiteEndpointExtensions {
     public static void MapSiteEndpoints(this WebApplication app) {
         var group = app.MapGroup("/sites")
             .MapGetAll();
-        
-        var specificSite = group.MapGroup("/{siteId:int}")
+
+        var specificSite = group.MapGroup("/{siteKey}")
             .MapGetByKey()
             .MapGetEvals();
-        
+
         var actions = specificSite.MapGroup("/actions")
             .MapBroadcastEval();
     }
 
     private static IEndpointRouteBuilder MapBroadcastEval(this IEndpointRouteBuilder group) {
         group.MapPost("broadcast-eval",
-                async ([FromServices] DataContext dataContext, int siteId,
+                async ([FromServices] DataContext dataContext, string siteKey,
                     [FromBody] BroadcastEvalRequestDto request) => {
                     var site = await dataContext.Sites
                         .Include(s => s.LocalClients)
                         .ThenInclude(s => s.GlobalClient)
-                        .FirstOrDefaultAsync(s => s.Id == siteId);
+                        .FirstOrDefaultAsync(s => s.Key == siteKey);
                     if (site == null) return Results.NotFound();
                     var message = new SiteBroadcastMessage {
                         Code = request.Code,
@@ -63,9 +64,13 @@ public static class SiteEndpointExtensions {
 
     private static IEndpointRouteBuilder MapGetEvals(this IEndpointRouteBuilder group) {
         group.MapGet("evals",
-                async ([FromServices] DataContext dataContext, int siteId) => {
+                async ([FromServices] DataContext dataContext, string siteKey, [Range(1, 100)] int count,
+                    int offset) => {
                     var evals = await dataContext.SiteBroadcastMessages
-                        .Where(m => m.SiteId == siteId)
+                        .Where(m => m.Site.Key == siteKey)
+                        .OrderByDescending(m => m.Timestamp)
+                        .Skip(offset)
+                        .Take(count)
                         .ToListAsync();
                     return evals.Select(DtoMapper.MapMessage);
                 })
@@ -89,12 +94,12 @@ public static class SiteEndpointExtensions {
 
     private static IEndpointRouteBuilder MapGetByKey(this IEndpointRouteBuilder group) {
         group.MapGet("",
-                async ([FromServices] DataContext dataContext, int siteId) => {
+                async ([FromServices] DataContext dataContext, string siteKey) => {
                     var site = await dataContext.Sites
                         .Include(s => s.LocalClients)
                         .ThenInclude(s => s.GlobalClient)
-                        .FirstOrDefaultAsync(s => s.Id == siteId);
-                    return site == null ? Results.NotFound() : Results.Ok();
+                        .FirstOrDefaultAsync(s => s.Key == siteKey);
+                    return site == null ? Results.NotFound() : Results.Ok(SiteDto.From(site));
                 })
             .Produces<SiteDto>()
             .Produces(StatusCodes.Status404NotFound)

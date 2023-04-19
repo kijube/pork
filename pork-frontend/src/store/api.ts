@@ -63,17 +63,17 @@ const injectedRtkApi = api.injectEndpoints({
       query: () => ({ url: `/sites` }),
     }),
     getSiteByKey: build.query<GetSiteByKeyApiResponse, GetSiteByKeyApiArg>({
-      query: (queryArg) => ({ url: `/sites/${queryArg.siteId}` }),
+      query: (queryArg) => ({ url: `/sites/${queryArg.siteKey}` }),
     }),
     getSiteEvals: build.query<GetSiteEvalsApiResponse, GetSiteEvalsApiArg>({
-      query: (queryArg) => ({ url: `/sites/${queryArg.siteId}/evals` }),
+      query: (queryArg) => ({ url: `/sites/${queryArg.siteKey}/evals` }),
     }),
     broadcastEval: build.mutation<
       BroadcastEvalApiResponse,
       BroadcastEvalApiArg
     >({
       query: (queryArg) => ({
-        url: `/sites/${queryArg.siteId}/actions/broadcast-eval`,
+        url: `/sites/${queryArg.siteKey}/actions/broadcast-eval`,
         method: "POST",
         body: queryArg.broadcastEvalRequestDto,
       }),
@@ -139,16 +139,16 @@ export type GetSitesApiResponse = /** status 200 Success */ SiteDto[];
 export type GetSitesApiArg = void;
 export type GetSiteByKeyApiResponse = /** status 200 Success */ SiteDto;
 export type GetSiteByKeyApiArg = {
-  siteId: number;
+  siteKey: string;
 };
 export type GetSiteEvalsApiResponse =
   /** status 200 Success */ InternalSiteBroadcastMessage[];
 export type GetSiteEvalsApiArg = {
-  siteId: number;
+  siteKey: string;
 };
 export type BroadcastEvalApiResponse = unknown;
 export type BroadcastEvalApiArg = {
-  siteId: number;
+  siteKey: string;
   broadcastEvalRequestDto: BroadcastEvalRequestDto;
 };
 export type GlobalClientDto = {
