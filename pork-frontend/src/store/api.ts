@@ -63,7 +63,20 @@ const injectedRtkApi = api.injectEndpoints({
       query: () => ({ url: `/sites` }),
     }),
     getSiteByKey: build.query<GetSiteByKeyApiResponse, GetSiteByKeyApiArg>({
-      query: (queryArg) => ({ url: `/sites/${queryArg.siteKey}` }),
+      query: (queryArg) => ({ url: `/sites/${queryArg.siteId}` }),
+    }),
+    getSiteEvals: build.query<GetSiteEvalsApiResponse, GetSiteEvalsApiArg>({
+      query: (queryArg) => ({ url: `/sites/${queryArg.siteId}/evals` }),
+    }),
+    broadcastEval: build.mutation<
+      BroadcastEvalApiResponse,
+      BroadcastEvalApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/sites/${queryArg.siteId}/actions/broadcast-eval`,
+        method: "POST",
+        body: queryArg.broadcastEvalRequestDto,
+      }),
     }),
   }),
   overrideExisting: false,
@@ -126,7 +139,17 @@ export type GetSitesApiResponse = /** status 200 Success */ SiteDto[];
 export type GetSitesApiArg = void;
 export type GetSiteByKeyApiResponse = /** status 200 Success */ SiteDto;
 export type GetSiteByKeyApiArg = {
-  siteKey: string;
+  siteId: number;
+};
+export type GetSiteEvalsApiResponse =
+  /** status 200 Success */ InternalSiteBroadcastMessage[];
+export type GetSiteEvalsApiArg = {
+  siteId: number;
+};
+export type BroadcastEvalApiResponse = unknown;
+export type BroadcastEvalApiArg = {
+  siteId: number;
+  broadcastEvalRequestDto: BroadcastEvalRequestDto;
 };
 export type GlobalClientDto = {
   id: string;
@@ -186,6 +209,17 @@ export type SiteDto = {
   key: string;
   localClients: LocalClientDto[];
 };
+export type InternalSiteMessage = {
+  type: string;
+  flowId: string | null;
+  timestamp: string;
+};
+export type InternalSiteBroadcastMessage = InternalSiteMessage & {
+  code: string;
+};
+export type BroadcastEvalRequestDto = {
+  code: string;
+};
 export const {
   useGetLocalClientsQuery,
   useGetLocalClientByIdQuery,
@@ -196,4 +230,6 @@ export const {
   useSetClientNicknameMutation,
   useGetSitesQuery,
   useGetSiteByKeyQuery,
+  useGetSiteEvalsQuery,
+  useBroadcastEvalMutation,
 } = injectedRtkApi;

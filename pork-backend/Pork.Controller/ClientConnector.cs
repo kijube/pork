@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pork.Shared;
 using Pork.Shared.Entities;
+using Pork.Shared.Entities.Messages.Requests;
 using Serilog;
 
 namespace Pork.Controller;
@@ -20,8 +21,7 @@ public class ClientConnector {
         // get existing global client or create a new one
         var globalClient = await dataContext.GlobalClients.FirstOrDefaultAsync(c => c.Id == clientId);
         if (globalClient is null) {
-            globalClient = new GlobalClient
-            {
+            globalClient = new GlobalClient {
                 Id = clientId
             };
             await dataContext.GlobalClients.AddAsync(globalClient);
@@ -34,8 +34,7 @@ public class ClientConnector {
         var site = await dataContext.Sites.FirstOrDefaultAsync(s => s.Key == Site.NormalizeKey(origin.Host));
 
         if (site is null) {
-            site = new Site
-            {
+            site = new Site {
                 Key = Site.NormalizeKey(origin.Host),
                 LocalClients = new List<LocalClient>()
             };
@@ -47,17 +46,33 @@ public class ClientConnector {
             c.GlobalClientId == globalClient.Id && c.SiteId == site.Id);
 
         if (localClient is null) {
-            localClient = new LocalClient
-            {
+            localClient = new LocalClient {
                 GlobalClient = globalClient,
                 Site = site
             };
             await dataContext.LocalClients.AddAsync(localClient);
+            await dataContext.SaveChangesAsync();
+
+            Log.Debug("New client connected: {ClientId} ({RemoteIp})", clientId, globalClient.RemoteIp);
+            await AddBroadcastsToClientAsync(dataContext, localClient);
         }
 
 
         await dataContext.SaveChangesAsync();
         return localClient;
+    }
+
+    private static async Task AddBroadcastsToClientAsync(DataContext dataContext, LocalClient localClient) {
+        var broadcasts = await dataContext.SiteBroadcastMessages.Where(b => b.SiteId == localClient.SiteId)
+            .ToListAsync();
+        var evalRequests = broadcasts.Select(b => new ClientEvalRequest {
+            Code = b.Code,
+            LocalClientId = localClient.Id,
+            FlowId = b.FlowId,
+            Timestamp = b.Timestamp
+        }).ToList();
+        Log.Debug("Adding {Count} broadcasts to client {ClientId}", evalRequests.Count, localClient.GlobalClientId);
+        await dataContext.ClientEvalRequests.AddRangeAsync(evalRequests);
     }
 
     public async Task ConnectAsync(HttpContext context) {
@@ -69,8 +84,7 @@ public class ClientConnector {
         var hasClientId = context.Request.Cookies.TryGetValue("clientId", out var clientIdStr);
         if (!hasClientId || clientIdStr is null) {
             clientIdStr = Guid.NewGuid().ToString();
-            context.Response.Cookies.Append("clientId", clientIdStr, new CookieOptions
-            {
+            context.Response.Cookies.Append("clientId", clientIdStr, new CookieOptions {
                 Expires = null, SameSite = SameSiteMode.Strict, HttpOnly = true
             });
         }

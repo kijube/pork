@@ -1,9 +1,11 @@
 ﻿using Pork.Manager.Dtos.Messages;
 using Pork.Manager.Dtos.Messages.Requests;
 using Pork.Manager.Dtos.Messages.Responses;
+using Pork.Manager.Dtos.Messages.Site;
 using Pork.Shared.Entities.Messages;
 using Pork.Shared.Entities.Messages.Requests;
 using Pork.Shared.Entities.Messages.Responses;
+using Pork.Shared.Entities.Messages.Site;
 
 namespace Pork.Manager.Dtos;
 
@@ -12,7 +14,9 @@ public static class DtoMapper {
         {typeof(ClientHookResponse), "hook"},
         {typeof(ClientFailureResponse), "error"},
         {typeof(ClientEvalResponse), "eval"},
-        {typeof(ClientEvalRequest), "evalreq"}
+        {typeof(ClientEvalRequest), "evalreq"},
+
+        {typeof(SiteBroadcastMessage), "broadcast"}
     };
 
     public static InternalMessage MapMessage(ClientMessage message) {
@@ -81,5 +85,20 @@ public static class DtoMapper {
         request.Timestamp = result.Timestamp;
 
         return result;
+    }
+
+    public static InternalSiteMessage MapMessage(SiteMessage message) {
+        InternalSiteMessage ism = message switch {
+            SiteBroadcastMessage broadcastMessage => new InternalSiteBroadcastMessage {
+                Code = broadcastMessage.Code,
+            },
+            _ => throw new ArgumentOutOfRangeException(nameof(message), message, null)
+        };
+
+        ism.FlowId = message.FlowId;
+        ism.Timestamp = message.Timestamp;
+        ism.Type = TypeMap[message.GetType()];
+
+        return ism;
     }
 }
