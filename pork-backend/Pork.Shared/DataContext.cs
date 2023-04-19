@@ -5,6 +5,7 @@ using Pork.Shared.Entities;
 using Pork.Shared.Entities.Messages;
 using Pork.Shared.Entities.Messages.Requests;
 using Pork.Shared.Entities.Messages.Responses;
+using Pork.Shared.Entities.Messages.Site;
 
 namespace Pork.Shared;
 
@@ -22,6 +23,9 @@ public class DataContext : DbContext {
     public DbSet<ClientFailureResponse> ClientFailureResponses { get; set; }
     public DbSet<ClientEvalResponse> ClientEvalResponses { get; set; }
     public DbSet<ClientHookResponse> ClientHookResponses { get; set; }
+
+    public DbSet<SiteMessage> SiteMessages { get; set; }
+    public DbSet<SiteBroadcastMessage> SiteBroadcastMessages { get; set; }
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
