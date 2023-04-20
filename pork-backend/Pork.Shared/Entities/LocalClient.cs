@@ -6,8 +6,9 @@ public class LocalClient {
     public Guid GlobalClientId { get; init; }
     public required GlobalClient GlobalClient { get; init; }
 
-    public bool IsOnline { get; set; }
+    public required bool IsOnline { get; set; }
     public int SiteId { get; init; }
     public required Site Site { get; init; }
-    public DateTimeOffset LastSeen { get; set; }
+    public required DateTimeOffset LastSeen { get; set; }
+    public string? RemoteIp { get; set; }
 }

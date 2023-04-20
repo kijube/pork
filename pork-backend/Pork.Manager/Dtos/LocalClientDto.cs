@@ -8,15 +8,17 @@ public class LocalClientDto {
     public required SiteNameDto Site { get; init; }
     public required bool IsOnline { get; init; }
     public required DateTimeOffset LastSeen { get; init; }
+    public required string? RemoteIp { get; init; }
+
 
     public static LocalClientDto From(LocalClient localClient) {
-        return new LocalClientDto
-        {
+        return new LocalClientDto {
             Id = localClient.Id,
             GlobalClient = GlobalClientDto.From(localClient.GlobalClient),
             Site = SiteNameDto.From(localClient.Site),
             IsOnline = localClient.IsOnline,
-            LastSeen = localClient.LastSeen
+            LastSeen = localClient.LastSeen,
+            RemoteIp = localClient.RemoteIp
         };
     }
 }

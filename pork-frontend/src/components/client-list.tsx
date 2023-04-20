@@ -53,7 +53,7 @@ function ClientListItem({ client }: { client: LocalClientDto }) {
         <OnlineIndicator isOnline={client.isOnline} />
         {client.globalClient.nickname
           ? client.globalClient.nickname
-          : client.globalClient.remoteIp}
+          : client.remoteIp}
       </li>
     </Link>
   )

@@ -66,7 +66,10 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({ url: `/sites/${queryArg.siteKey}` }),
     }),
     getSiteEvals: build.query<GetSiteEvalsApiResponse, GetSiteEvalsApiArg>({
-      query: (queryArg) => ({ url: `/sites/${queryArg.siteKey}/evals` }),
+      query: (queryArg) => ({
+        url: `/sites/${queryArg.siteKey}/evals`,
+        params: { count: queryArg.count, offset: queryArg.offset },
+      }),
     }),
     broadcastEval: build.mutation<
       BroadcastEvalApiResponse,
@@ -145,6 +148,8 @@ export type GetSiteEvalsApiResponse =
   /** status 200 Success */ InternalSiteBroadcastMessage[];
 export type GetSiteEvalsApiArg = {
   siteKey: string;
+  count: number;
+  offset: number;
 };
 export type BroadcastEvalApiResponse = unknown;
 export type BroadcastEvalApiArg = {
@@ -153,7 +158,6 @@ export type BroadcastEvalApiArg = {
 };
 export type GlobalClientDto = {
   id: string;
-  remoteIp: string | null;
   nickname: string | null;
 };
 export type SiteNameDto = {
@@ -166,6 +170,7 @@ export type LocalClientDto = {
   site: SiteNameDto;
   isOnline: boolean;
   lastSeen: string;
+  remoteIp: string | null;
 };
 export type ClientLogDto = {
   level: string;

@@ -47,7 +47,7 @@ export default function ClientIndexPage() {
         <div className="flex w-full flex-row items-center gap-2 px-2">
           <OnlineIndicator className="h-4 w-4" isOnline={client?.isOnline} />
           <h1 className="text-xl font-bold">
-            {isSuccess ? client.globalClient.remoteIp : "..."}
+            {isSuccess ? (client.remoteIp ?? "[unknown ip]") : "..."}
           </h1>
           <Nickname />
           {isSuccess && (
