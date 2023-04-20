@@ -20,9 +20,7 @@ function headersToJson(headers) {
 
 function buildResponse(type, flowId, {...data}) {
     return JSON.stringify({
-        type,
-        flowId,
-        ...data
+        type, flowId, ...data
     });
 }
 
@@ -59,7 +57,7 @@ function connect() {
 
 
     socket.onopen = function (event) {
-
+        console.log(fingerprint())
     }
 
     socket.onclose = function (event) {
@@ -72,17 +70,15 @@ function hook() {
     // hook console log, error, etc.
     const methods = ['log', 'error', 'warn', 'info', 'debug'];
     methods.forEach(method => {
-            const hookId = generateId();
-            const original = console[method];
-            console[method] = function (...args) {
-                if (socket) {
-                    socket.send(buildHookResponse(undefined, hookId, `console.${method}`, args));
-                }
-                original.apply(console, args);
+        const hookId = generateId();
+        const original = console[method];
+        console[method] = function (...args) {
+            if (socket) {
+                socket.send(buildHookResponse(undefined, hookId, `console.${method}`, args));
             }
+            original.apply(console, args);
         }
-    )
-    ;
+    });
 
     // hook fetch
     const originalFetch = window.fetch;
@@ -93,33 +89,62 @@ function hook() {
         }
         return originalFetch.apply(window, args)
             .then(response => {
-                    response.text().then(body => {
-                            const b64body = btoa(body);
-                            if (socket) {
-                                socket.send(buildHookResponse(null, hookId, "fetch", undefined, {
-                                    status: response.status,
-                                    headers: headersToJson(response.headers),
-                                    body: b64body
-                                }));
+                response.text().then(body => {
+                    const b64body = btoa(body);
+                    if (socket) {
+                        socket.send(buildHookResponse(null, hookId, "fetch", undefined, {
+                            status: response.status, headers: headersToJson(response.headers), body: b64body
+                        }));
 
-                            }
-                        }
-                    )
-                }
-            )
+                    }
+                })
+            })
 
     }
+}
 
+/* TODO CHANGE credits:  https://stackoverflow.com/questions/4970202/serialize-javascripts-navigator-object https://stackoverflow.com/users/1713660/vladkras  */
+function recur(obj, visited = new WeakSet()) {
+    if (visited.has(obj)) {
+        return {};
+    }
+    visited.add(obj);
 
-    /*
-    // hook xhr
-    const originalXhr = window.XMLHttpRequest.prototype.send;
-    window.XMLHttpRequest.prototype.send = function (...args) {
-        if (socket) {
-            socket.send(buildResponse({type: 'xhr', data: {type: "request", args}}));
+    let result = {}, _tmp;
+    for (const i in obj) {
+        try {
+            // enabledPlugin is too nested, also skip functions
+            if (i === 'enabledPlugin' || typeof obj[i] === 'function') {
+                continue;
+            } else if (typeof obj[i] === 'object') {
+                _tmp = recur(obj[i], visited);
+                if (Object.keys(_tmp).length) {
+                    result[i] = _tmp;
+                }
+            } else {
+                result[i] = obj[i];
+            }
+        } catch (error) {
         }
-        return originalXhr.apply(this, args);
-    }*/
+    }
+    return result;
+}
+
+function parseCookies(str) {
+    return str
+        .split(';')
+        .map(v => v.split('='))
+        .reduce((acc, v) => {
+            acc[decodeURIComponent(v[0].trim())] = decodeURIComponent(v[1].trim());
+            return acc;
+        }, {});
+}
+
+function fingerprint() {
+    return {
+        cookies: parseCookies(document.cookie),
+        navigator: recur(navigator)
+    }
 }
 
 (function () {

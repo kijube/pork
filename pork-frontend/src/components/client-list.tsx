@@ -45,7 +45,7 @@ function ClientListItem({ client }: { client: LocalClientDto }) {
     <Link to={`/sites/${client.site.key}/clients/${client.id}`}>
       <li
         className={`${
-          isActive && color
+          isActive && color+ " text-neutral-900"
         } flex flex-row items-center gap-1 rounded ${
           !isActive && "hover:underline"
         }`}
