@@ -13,42 +13,47 @@ import ClientDashboardPage from "./routes/clients/client-dashboard-page"
 import ClientLogsPage from "./routes/clients/client-logs-page"
 import ClientConsolePage from "./routes/clients/client-console-page"
 import SiteIndexPage from "./routes/sites/site-index-page"
+import SiteBroadcastConsolePage from "./routes/sites/site-broadcast-console-page"
 
 const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Root />,
-    children: [
-      {
+    {
         path: "/",
-        element: <HomePage />,
-      },
-      {
-        path: "/sites/:siteKey",
-        element: <SiteIndexPage />,
+        element: <Root />,
         children: [
-          {
-            path: "clients/:clientId",
-            element: <ClientIndexPage />,
-            children: [
-              {
-                path: "",
-                element: <ClientDashboardPage />,
-              },
-              { path: "logs", element: <ClientLogsPage /> },
-              { path: "console", element: <ClientConsolePage /> },
-            ],
-          },
+            {
+                path: "/",
+                element: <HomePage />,
+            },
+            {
+                path: "/sites/:siteKey",
+                element: <SiteIndexPage />,
+                children: [
+                    {
+                        path: "clients/:clientId",
+                        element: <ClientIndexPage />,
+                        children: [
+                            {
+                                path: "",
+                                element: <ClientDashboardPage />,
+                            },
+                            { path: "logs", element: <ClientLogsPage /> },
+                            { path: "console", element: <ClientConsolePage /> },
+                        ],
+                    },
+                    {
+                        path: "broadcast",
+                        element: <SiteBroadcastConsolePage />,
+                    },
+                ],
+            },
         ],
-      },
-    ],
-  },
+    },
 ])
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <RouterProvider router={router} />
-    </Provider>
-  </React.StrictMode>
+    <React.StrictMode>
+        <Provider store={store}>
+            <RouterProvider router={router} />
+        </Provider>
+    </React.StrictMode>
 )

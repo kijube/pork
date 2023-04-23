@@ -65,6 +65,22 @@ const injectedRtkApi = api.injectEndpoints({
     getSiteByKey: build.query<GetSiteByKeyApiResponse, GetSiteByKeyApiArg>({
       query: (queryArg) => ({ url: `/sites/${queryArg.siteKey}` }),
     }),
+    getSiteEvals: build.query<GetSiteEvalsApiResponse, GetSiteEvalsApiArg>({
+      query: (queryArg) => ({
+        url: `/sites/${queryArg.siteKey}/evals`,
+        params: { count: queryArg.count, offset: queryArg.offset },
+      }),
+    }),
+    broadcastEval: build.mutation<
+      BroadcastEvalApiResponse,
+      BroadcastEvalApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/sites/${queryArg.siteKey}/actions/broadcast-eval`,
+        method: "POST",
+        body: queryArg.broadcastEvalRequestDto,
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -128,9 +144,20 @@ export type GetSiteByKeyApiResponse = /** status 200 Success */ SiteDto;
 export type GetSiteByKeyApiArg = {
   siteKey: string;
 };
+export type GetSiteEvalsApiResponse =
+  /** status 200 Success */ InternalSiteBroadcastMessage[];
+export type GetSiteEvalsApiArg = {
+  siteKey: string;
+  count: number;
+  offset: number;
+};
+export type BroadcastEvalApiResponse = unknown;
+export type BroadcastEvalApiArg = {
+  siteKey: string;
+  broadcastEvalRequestDto: BroadcastEvalRequestDto;
+};
 export type GlobalClientDto = {
   id: string;
-  remoteIp: string | null;
   nickname: string | null;
 };
 export type SiteNameDto = {
@@ -143,6 +170,7 @@ export type LocalClientDto = {
   site: SiteNameDto;
   isOnline: boolean;
   lastSeen: string;
+  remoteIp: string | null;
 };
 export type ClientLogDto = {
   level: string;
@@ -186,6 +214,17 @@ export type SiteDto = {
   key: string;
   localClients: LocalClientDto[];
 };
+export type InternalSiteMessage = {
+  type: string;
+  flowId: string | null;
+  timestamp: string;
+};
+export type InternalSiteBroadcastMessage = InternalSiteMessage & {
+  code: string;
+};
+export type BroadcastEvalRequestDto = {
+  code: string;
+};
 export const {
   useGetLocalClientsQuery,
   useGetLocalClientByIdQuery,
@@ -196,4 +235,6 @@ export const {
   useSetClientNicknameMutation,
   useGetSitesQuery,
   useGetSiteByKeyQuery,
+  useGetSiteEvalsQuery,
+  useBroadcastEvalMutation,
 } = injectedRtkApi;

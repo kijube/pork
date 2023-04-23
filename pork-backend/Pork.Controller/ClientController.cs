@@ -68,6 +68,12 @@ public class ClientController : IAsyncDisposable {
                 return;
             }
 
+            if (!response.GetType().Name.StartsWith("External")) {
+                // security feature: only allow External types
+                Logger.Warning("Client tried to send non-external response {@Response}", response);
+                return;
+            }
+
             var clientResponse = DtoMapper.MapExternalResponse(localClient.Id, response);
 
             switch (clientResponse) {
@@ -116,7 +122,7 @@ public class ClientController : IAsyncDisposable {
         try {
             var success = DtoSerializer.TrySerializeRequest(request, out var json);
             if (!success) {
-                throw new Exception($"Failed to serialize request with id {request.Id}");
+                return false;
             }
 
             var bytes = Encoding.UTF8.GetBytes(json);

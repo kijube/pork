@@ -3,14 +3,13 @@ import { Outlet } from "react-router-dom"
 import OnlineIndicator from "../../components/online-indicator"
 import Nickname from "../../components/nickname"
 import Tabs, { TabProps } from "../../components/tabs"
-import { timestampFormat } from "../../utils"
+import { ScrollContainerContext, timestampFormat } from "../../utils"
 import { createContext, RefObject, useMemo, useRef } from "react"
 import { useGetCurrentLocalClient, useGetSiteKey } from "../../hooks"
 import { ChevronRightSquareIcon, ScrollIcon, UserIcon } from "lucide-react"
 import TextWithIcon from "../../components/text-with-icon"
 
-export const ScrollContainerContext =
-  createContext<RefObject<HTMLDivElement> | null>(null)
+
 
 export default function ClientIndexPage() {
   const { data: client, isSuccess, clientId } = useGetCurrentLocalClient()
@@ -44,11 +43,11 @@ export default function ClientIndexPage() {
   )
   return (
     <div className="flex h-full flex-col items-stretch gap-2">
-      <nav className="w-full bg-neutral-900 p-2 pb-0">
+      <nav className="w-full bg-neutral-900 px-2">
         <div className="flex w-full flex-row items-center gap-2 px-2">
           <OnlineIndicator className="h-4 w-4" isOnline={client?.isOnline} />
           <h1 className="text-xl font-bold">
-            {isSuccess ? client.globalClient.remoteIp : "..."}
+            {isSuccess ? (client.remoteIp ?? "[unknown ip]") : "..."}
           </h1>
           <Nickname />
           {isSuccess && (

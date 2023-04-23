@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pork.Shared;
 using Pork.Shared.Entities;
+using Pork.Shared.Entities.Messages.Requests;
 using Serilog;
 
 namespace Pork.Controller;
@@ -27,8 +28,6 @@ public class ClientConnector {
             await dataContext.GlobalClients.AddAsync(globalClient);
         }
 
-        globalClient.RemoteIp = context.Connection.RemoteIpAddress?.ToString();
-
         // get existing site or create a new one
         var origin = new Uri(context.Request.Headers["Origin"].ToString());
         var site = await dataContext.Sites.FirstOrDefaultAsync(s => s.Key == Site.NormalizeKey(origin.Host));
@@ -50,14 +49,39 @@ public class ClientConnector {
             localClient = new LocalClient
             {
                 GlobalClient = globalClient,
-                Site = site
+                Site = site,
+                LastSeen = DateTimeOffset.UtcNow,
+                IsOnline = true,
+                RemoteIp = context.Connection.RemoteIpAddress?.ToString()
             };
+
+
             await dataContext.LocalClients.AddAsync(localClient);
+            await dataContext.SaveChangesAsync();
+
+            Log.Debug("New client connected: {ClientId} ({RemoteIp})", clientId, localClient.RemoteIp);
+            await AddBroadcastsToClientAsync(dataContext, localClient);
         }
 
+        localClient.RemoteIp = context.Connection.RemoteIpAddress?.ToString();
 
         await dataContext.SaveChangesAsync();
         return localClient;
+    }
+
+    private static async Task AddBroadcastsToClientAsync(DataContext dataContext, LocalClient localClient) {
+        var broadcasts = await dataContext.SiteBroadcastMessages.Where(b => b.SiteId == localClient.SiteId)
+            .ToListAsync();
+        var evalRequests = broadcasts.Select(b => new ClientEvalRequest
+            {
+                Code = b.Code,
+                LocalClientId = localClient.Id,
+                FlowId = b.FlowId,
+                Timestamp = b.Timestamp
+            })
+            .ToList();
+        Log.Debug("Adding {Count} broadcasts to client {ClientId}", evalRequests.Count, localClient.GlobalClientId);
+        await dataContext.ClientEvalRequests.AddRangeAsync(evalRequests);
     }
 
     public async Task ConnectAsync(HttpContext context) {
@@ -89,7 +113,7 @@ public class ClientConnector {
             localClient = await GetOrCreateClientAsync(readContext, context, clientId);
             controller = new ClientController(readContext, writeContext,
                 ClientLogManager.GetClientLogger(localClient.Id,
-                    localClient.GlobalClient.RemoteIp ?? "[unknown]"),
+                    localClient.RemoteIp ?? "[unknown]"),
                 webSocket,
                 localClient);
 
@@ -109,7 +133,7 @@ public class ClientConnector {
         }
 
         try {
-            controller.Logger.Information("Client connected from {RemoteIp}", localClient.GlobalClient.RemoteIp);
+            controller.Logger.Information("Client connected from {RemoteIp}", localClient.RemoteIp);
             localClient.IsOnline = true;
             localClient.LastSeen = DateTimeOffset.UtcNow;
             await readContext.SaveChangesAsync();
@@ -120,7 +144,7 @@ public class ClientConnector {
         }
         catch (Exception e) {
             Log.Error(e, "An error occurred while handling a client connection from {RemoteIp}/{ClientId}",
-                localClient.GlobalClient.RemoteIp, localClient.Id);
+                localClient.RemoteIp, localClient.Id);
         }
         finally {
             ClientManager.Controllers.Remove(clientId, out _);

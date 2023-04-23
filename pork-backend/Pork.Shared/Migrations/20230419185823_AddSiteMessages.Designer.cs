@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pork.Shared;
@@ -11,9 +12,11 @@ using Pork.Shared;
 namespace Pork.Shared.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230419185823_AddSiteMessages")]
+    partial class AddSiteMessages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,6 +65,9 @@ namespace Pork.Shared.Migrations
                     b.Property<string>("Nickname")
                         .HasColumnType("text");
 
+                    b.Property<string>("RemoteIp")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("GlobalClients");
@@ -83,9 +89,6 @@ namespace Pork.Shared.Migrations
 
                     b.Property<DateTimeOffset>("LastSeen")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("RemoteIp")
-                        .HasColumnType("text");
 
                     b.Property<int>("SiteId")
                         .HasColumnType("integer");
