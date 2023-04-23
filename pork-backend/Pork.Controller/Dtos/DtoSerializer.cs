@@ -8,9 +8,9 @@ namespace Pork.Controller.Dtos;
 
 public static class DtoSerializer {
     private static readonly Dictionary<string, Type> ResponseMap = new() {
-        {"e", typeof(ExternalEvalResponse)},
-        {"f", typeof(ExternalFailureResponse)},
-        {"h", typeof(ExternalHookResponse)}
+        {"eval", typeof(ExternalEvalResponse)},
+        {"fail", typeof(ExternalFailureResponse)},
+        {"hook", typeof(ExternalHookResponse)}
     };
 
     private static readonly Dictionary<Type, Type> RequestMap = new() {
@@ -46,7 +46,7 @@ public static class DtoSerializer {
     public static ExternalRequest MapRequest(ClientRequest request) {
         var result = request switch {
             ClientEvalRequest evalRequest => new ExternalEvalRequest {
-                Type = "e",
+                Type = "eval",
                 Code = evalRequest.Code
             },
             _ => throw new ArgumentOutOfRangeException(nameof(request), request, null)

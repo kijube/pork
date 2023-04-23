@@ -47,9 +47,6 @@ if (app.Environment.IsDevelopment()) {
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles(new StaticFileOptions {
-    FileProvider = new PhysicalFileProvider(Path.Join(app.Environment.ContentRootPath, "static"))
-});
 
 app.UseWebSockets();
 app.Use(async (context, next) => {

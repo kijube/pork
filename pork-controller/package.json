@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "esbuild": "^0.17.18",
+    "typescript": "^5.0.4"
+  },
+  "scripts": {
+    "watch":  "esbuild src/controller.ts --bundle --outfile=dist/controller.js --watch --keep-names --sourcemap",
+    "prod":   "esbuild src/controller.ts --minify --bundle --outfile=dist/controller.min.js"
+  }
+}

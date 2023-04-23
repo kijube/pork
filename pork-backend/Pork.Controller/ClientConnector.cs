@@ -90,13 +90,9 @@ public class ClientConnector {
         await using var readContext = readScope.ServiceProvider.GetRequiredService<DataContext>();
         await using var writeContext = writeScope.ServiceProvider.GetRequiredService<DataContext>();
 
-        var hasClientId = context.Request.Cookies.TryGetValue("clientId", out var clientIdStr);
-        if (!hasClientId || clientIdStr is null) {
+        var hasClientId = context.Request.Query.TryGetValue("id", out var clientIdStr);
+        if (!hasClientId || clientIdStr == "") {
             clientIdStr = Guid.NewGuid().ToString();
-            context.Response.Cookies.Append("clientId", clientIdStr, new CookieOptions
-            {
-                Expires = DateTimeOffset.MaxValue, SameSite = SameSiteMode.Strict, HttpOnly = true
-            });
         }
 
         if (!Guid.TryParse(clientIdStr, out var clientId)) {

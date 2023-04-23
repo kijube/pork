@@ -164,9 +164,17 @@ public class ClientController : IAsyncDisposable {
         }
     }
 
+    private async Task SendIdAsync(CancellationToken ct) {
+        var bytes = Encoding.UTF8.GetBytes(localClient.GlobalClientId.ToString());
+        await webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true,
+            ct);
+    }
+
     public async Task RunAsync() {
         using var cts = new CancellationTokenSource();
+
         try {
+            await SendIdAsync(cts.Token);
             _ = RunSenderAsync(cts.Token);
             await HandleAsync(cts);
         }

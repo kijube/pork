@@ -16,15 +16,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="static\controller.js">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="static\test.html">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\Pork.Shared\Pork.Shared.csproj" />
     </ItemGroup>
 
