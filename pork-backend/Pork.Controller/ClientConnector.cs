@@ -71,7 +71,7 @@ public class ClientConnector {
             clientIdStr = Guid.NewGuid().ToString();
             context.Response.Cookies.Append("clientId", clientIdStr, new CookieOptions
             {
-                Expires = null, SameSite = SameSiteMode.Strict, HttpOnly = true
+                Expires = DateTimeOffset.MaxValue, SameSite = SameSiteMode.Strict, HttpOnly = true
             });
         }
 
