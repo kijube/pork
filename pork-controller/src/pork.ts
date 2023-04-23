@@ -26,8 +26,10 @@ let isConnected: boolean
 let responseBuffer: PorkResponse[] = []
 const handlers = new Map<PorkRequestType, BasePorkRequestHandler>()
 
+let manuallyDisconnected = false
+
 const connect = (autoReconnect = true) => {
-  if (socket) {
+  if (isConnected) {
     return
   }
 
@@ -37,13 +39,14 @@ const connect = (autoReconnect = true) => {
   const idStr = id ? `?id=${id}` : ""
 
   socket = new WebSocket(`ws://localhost:9092/connect${idStr}`)
-  socket.onopen = () => {}
 
   socket.onclose = () => {
     isConnected = false
-    if (autoReconnect) {
+    if (autoReconnect && !manuallyDisconnected) {
+      console.log("reconnecting...")
       setTimeout(() => connect(), 2000)
     }
+    manuallyDisconnected = false
   }
 
   socket.onmessage = (event) => {
@@ -72,6 +75,7 @@ const disconnect = () => {
   if (!socket) {
     return
   }
+  manuallyDisconnected = true
   socket.close()
 }
 
