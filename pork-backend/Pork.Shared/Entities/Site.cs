@@ -1,7 +1,7 @@
 ﻿namespace Pork.Shared.Entities;
 
 public class Site {
-    private const string AllowedKeyChars = "abcdefghijklmnopqrstuvwxyz0123456789-";
+    private const string AllowedKeyChars = "abcdefghijklmnopqrstuvwxyz0123456789-.:";
 
     public int Id { get; init; }
     public required string Key { get; init; }

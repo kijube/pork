@@ -7,17 +7,21 @@ using Serilog;
 namespace Pork.Controller.Dtos;
 
 public static class DtoSerializer {
-    private static readonly Dictionary<string, Type> ResponseMap = new() {
+    private static readonly Dictionary<string, Type> ResponseMap = new()
+    {
         {"eval", typeof(ExternalEvalResponse)},
         {"fail", typeof(ExternalFailureResponse)},
-        {"hook", typeof(ExternalHookResponse)}
+        {"hook", typeof(ExternalHookResponse)},
+        {"dump", typeof(ExternalDumpResponse)}
     };
 
-    private static readonly Dictionary<Type, Type> RequestMap = new() {
+    private static readonly Dictionary<Type, Type> RequestMap = new()
+    {
         {typeof(ClientEvalRequest), typeof(ExternalEvalRequest)}
     };
 
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new() {
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true
     };
@@ -44,8 +48,10 @@ public static class DtoSerializer {
     }
 
     public static ExternalRequest MapRequest(ClientRequest request) {
-        var result = request switch {
-            ClientEvalRequest evalRequest => new ExternalEvalRequest {
+        var result = request switch
+        {
+            ClientEvalRequest evalRequest => new ExternalEvalRequest
+            {
                 Type = "eval",
                 Code = evalRequest.Code
             },

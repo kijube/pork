@@ -1,5 +1,5 @@
-import { pork } from "../pork"
-import { PorkResponse, failureResponse } from "../responses"
+import { pork } from "../../pork"
+import { PorkResponse, failureResponse } from "../../responses"
 import { PorkRequest, PorkRequestHandler } from "./request"
 
 export type PorkEvalRequest = PorkRequest & {

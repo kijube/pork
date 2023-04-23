@@ -1,4 +1,4 @@
-export type PorkResponseType = "failure" | "eval" | "hook"
+export type PorkResponseType = "failure" | "eval" | "hook" | "dump"
 
 export type PorkResponse = {
   type: PorkResponseType

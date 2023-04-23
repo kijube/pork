@@ -23,6 +23,7 @@ public class DataContext : DbContext {
     public DbSet<ClientFailureResponse> ClientFailureResponses { get; set; }
     public DbSet<ClientEvalResponse> ClientEvalResponses { get; set; }
     public DbSet<ClientHookResponse> ClientHookResponses { get; set; }
+    public DbSet<ClientDumpResponse> ClientDumpResponses { get; set; }
 
     public DbSet<SiteMessage> SiteMessages { get; set; }
     public DbSet<SiteBroadcastMessage> SiteBroadcastMessages { get; set; }
@@ -40,5 +41,9 @@ public class DataContext : DbContext {
 
         modelBuilder.Entity<LocalClient>().HasIndex(c => new {c.GlobalClientId, c.SiteId}).IsUnique();
         modelBuilder.Entity<Site>().HasIndex(c => new {c.Key}).IsUnique();
+
+        modelBuilder.Entity<ClientDumpResponse>()
+            .Property(cdr => cdr.Dump)
+            .HasColumnType("json");
     }
 }

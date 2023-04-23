@@ -30,12 +30,17 @@ public class ClientConnector {
 
         // get existing site or create a new one
         var origin = new Uri(context.Request.Headers["Origin"].ToString());
-        var site = await dataContext.Sites.FirstOrDefaultAsync(s => s.Key == Site.NormalizeKey(origin.Host));
+        var key = origin.Host;
+        if (!origin.IsDefaultPort) {
+            key += ":" + origin.Port;
+        }
+
+        var site = await dataContext.Sites.FirstOrDefaultAsync(s => s.Key == Site.NormalizeKey(key));
 
         if (site is null) {
             site = new Site
             {
-                Key = Site.NormalizeKey(origin.Host),
+                Key = Site.NormalizeKey(key),
                 LocalClients = new List<LocalClient>()
             };
             await dataContext.Sites.AddAsync(site);

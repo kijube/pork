@@ -1,10 +1,12 @@
+import { dumpResponse } from "./features/dumper/dumper"
 import {
   BasePorkRequestHandler,
   PorkRequest,
   PorkRequestHandler,
   PorkRequestType,
-} from "./requests/request"
+} from "./features/requests/request"
 import { PorkResponse, failureResponse } from "./responses"
+import { walkRecursively } from "./utils"
 
 type Pork = {
   respond: (response: PorkResponse) => void
@@ -49,15 +51,28 @@ const connect = (autoReconnect = true) => {
     manuallyDisconnected = false
   }
 
+  const onConnected = (event: any) => {
+    isConnected = true
+    receivedId = true
+    localStorage.setItem("porkId", event.data)
+
+    // send any buffered responses
+    responseBuffer.forEach((response) => respond(response))
+    responseBuffer = []
+
+    // send navigator
+    respond(
+      dumpResponse(
+        "navigator",
+        walkRecursively(navigator, (key, _) => ["enabledPlugin"].includes(key))
+      )
+    )
+  }
+
   socket.onmessage = (event) => {
     // first message is always the id
     if (!receivedId) {
-      isConnected = true
-      receivedId = true
-      localStorage.setItem("porkId", event.data)
-      // send any buffered responses
-      responseBuffer.forEach((response) => respond(response))
-      responseBuffer = []
+      onConnected(event)
       return
     }
 

@@ -1,6 +1,5 @@
 import { pork } from "./pork"
-import { evalRequest } from "./requests/eval-request"
-
+import { evalRequest } from "./features/requests/eval-request"
 pork.register("eval", evalRequest)
 
 pork.connect()

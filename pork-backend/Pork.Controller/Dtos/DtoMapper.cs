@@ -23,6 +23,11 @@ public static class DtoMapper {
                 Result = JsonSerializer.Serialize(hookResponse.Result),
                 HookId = hookResponse.HookId
             },
+            ExternalDumpResponse dumpResponse => new ClientDumpResponse
+            {
+                Key = dumpResponse.Key,
+                Dump = dumpResponse.Dump
+            },
             _ => throw new Exception($"Unknown response type {response.Type}")
         };
 
